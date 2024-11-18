@@ -1,8 +1,6 @@
 const Admin = require("../models/adminModel");
 
-// @desc    Get all admins
-// @route   GET /api/v1/admins
-// @access  Private/Super Admin
+
 const getAllAdmins = async (req, res) => {
   try {
     console.log("Getting all admin accounts...");
