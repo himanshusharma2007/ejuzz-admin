@@ -1,6 +1,5 @@
 const Admin = require("../models/adminModel");
 
-
 const getAllAdmins = async (req, res) => {
   try {
     console.log("Getting all admin accounts...");
