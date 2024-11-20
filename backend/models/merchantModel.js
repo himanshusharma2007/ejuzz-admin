@@ -1,71 +1,174 @@
+const mongoose = require("mongoose");
+const { encrypt, decrypt } = require("../utils/cryptoFunc");
 
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+// Schema for Merchant Information
 const merchantSchema = new mongoose.Schema({
-    storeName: {
-      type: String,
-      required: true,
-      unique: true
+  name: {
+    type: String, 
+    required: [true, "Name is required."], 
+    trim: true 
+  },
+  email: { 
+    type: String, 
+    required: [true, "Email is required."], 
+    unique: true, 
+    match: [/^\S+@\S+\.\S+$/, "Invalid email address."] 
+  },
+  phoneNo: { 
+    type: String, 
+    required: [true, "Phone number is required."], 
+    match: [/^\d{10,15}$/, "Invalid phone number."] 
+  },
+  loginId: { 
+    type: String, 
+    default: null 
+  },
+  password: { 
+    type: String, 
+    default: null, 
+    minlength: [8, "Password must be at least 8 characters long."],
+    select: false,
+  },
+  isVerify: { 
+    type: Boolean, 
+    default: false 
+  },
+  businessName: { 
+    type: String, 
+    required: [true, "Business name is required."],
+    trim: true 
+  },
+  businessCategory: { 
+    type: String, 
+    required: [true, "Business category is required."] 
+  },
+  businessAddress: { 
+    type: String, 
+    required: [true, "Business address is required."], 
+    trim: true 
+  },
+  businessRegistrationNumber: {
+     type: String,
+     required: [true, "Business registration number is required."],
+     unique: true  
+   },
+  socialMediaLink: { 
+    type: String, 
+    match: [/^https?:\/\/.+/, "Invalid social media link."] 
+
+  },
+  bankInformation: {
+    branchCode: { 
+      type: String, 
+      required: [true, "Branch Code is required."] 
     },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true
+    accountName: { 
+      type: String, 
+      required: [true, "Bank account name is required."] 
     },
-    password: {
-      type: String,
-      required: true,
-      select: false
+    accountHolder: { 
+      type: String, 
+      required: [true, "Account holder name is required."] 
     },
-    phoneNumber: String,
-    address: {
-      street: String,
-      city: String,
-      postalCode: String,
-      country: String
+    bankName: { 
+      type: String, 
+      required: [true, "Bank name is required."] 
     },
-    isVerified: {
-      type: Boolean,
-      default: false
+    branchName: { 
+      type: String, 
+      required: [true, "Bank branch name is required."] 
     },
-    products: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product'
-    }],
-    payoutBalance: {
-      type: Number,
-      default: 0
+    accountNumber: { 
+      type: String, 
+      required: [true, "Account number is required."] 
     },
-    bankAccountDetails: {
-      accountNumber: String,
-      bankName: String,
-      branch: String,
-      IFSCCode: String
-    },
-    ratings: [{
-      rating: Number,
-      customer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Customer'
-      },
-      comment: String,
-      date: Date
-    }],
-    commission: {
-      type: {
-        type: String,
-        enum: ['percentage', 'fixed'],
-        default: 'percentage'
-      },
-      value: {
-        type: Number,
-        default: 10
-      }
+  },
+  govId: { 
+    url: { 
+    type: String, 
+    required: [true, "Government ID file URL is required."] 
+  }, 
+  public_id: { 
+    type: String, 
+    required: [true, "Government ID file public ID is required."],
+  } 
+},
+  businessLicense: { 
+    url: { 
+      type: String, 
+      required: [true, "Business license file URL is required."] 
+    }, 
+    public_id: { 
+      type: String, 
+      required: [true, "Business license file public ID is required."] 
+    } 
+  },
+  taxDocument: { 
+    url: { 
+      type: String, 
+      required: [true, "Tax document file URL is required."] 
+    }, 
+    public_id: { 
+      type: String, 
+      required: [true, "Tax document file public ID is required."] 
+    } 
+  },
+  products: [
+    { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "product" 
     }
-  }, {
-    timestamps: true
-  });
-  
-  const Merchant = mongoose.model('Merchant', merchantSchema);
-  module.exports = Merchant;
+  ],
+  payoutBalance: { 
+    type: Number, 
+    default: 0, 
+    min: [0, "Payout balance cannot be negative."] 
+  },
+  ratings: [
+    {
+      userId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "customer", required: [true, "Customer Id is required for rating."] 
+      },
+      rating: { 
+        type: Number, 
+        min: 1, 
+        max: 5, 
+        required: [true, "Rating number is required."] 
+      },
+      comment: { 
+        type: String, 
+        default: "" 
+      },
+    },
+  ],
+}, { timestamps: true });
+
+// Middleware to encrypt bank information before saving
+merchantSchema.pre("save", function (next) {
+  if (this.isModified("bankInformation")) {
+    this.bankInformation.branchCode = encrypt(this.bankInformation.branchCode);
+    this.bankInformation.accountName = encrypt(this.bankInformation.accountName);
+    this.bankInformation.accountHolder = encrypt(this.bankInformation.accountHolder);
+    this.bankInformation.bankName = encrypt(this.bankInformation.bankName);
+    this.bankInformation.branchName = encrypt(this.bankInformation.branchName);
+    this.bankInformation.accountNumber = encrypt(this.bankInformation.accountNumber);
+  }
+  next();
+});
+
+// Static method to decrypt bank information
+merchantSchema.methods.decryptBankInfo = function () {
+  return {
+    branchCode: decrypt(this.bankInformation.branchCode),
+    accountName: decrypt(this.bankInformation.accountName),
+    accountHolder: decrypt(this.bankInformation.accountHolder),
+    bankName: decrypt(this.bankInformation.bankName),
+    branchName: decrypt(this.bankInformation.branchName),
+    accountNumber: decrypt(this.bankInformation.accountNumber),
+  };
+};
+
+const Merchant = mongoose.model("Merchant", merchantSchema);
+
+module.exports = Merchant;

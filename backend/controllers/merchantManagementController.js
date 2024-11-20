@@ -1,6 +1,7 @@
 const Merchant = require('../models/merchantModel');
 const Admin = require('../models/adminModel');
-
+const sendEmail = require('../utils/sendEmail');
+const hashPassword = require('../utils/password');
 // Get all merchants with pagination and filters
 exports.getAllMerchants = async (req, res) => {
   try {
@@ -80,7 +81,56 @@ exports.getMerchantDetails = async (req, res) => {
   }
 };
 
-// Handle merchant verification
+// Helper function to generate unique login ID from business name
+const generateLoginId = async (businessName) => {
+  // Remove special characters and spaces, convert to lowercase
+  let baseId = businessName
+    .toLowerCase()
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 12);
+  
+  // Add random numbers to ensure uniqueness
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  let loginId = `${baseId}${randomNum}`;
+  
+  // Check if ID already exists, if so, generate a new one
+  let isUnique = false;
+  let attempts = 0;
+  
+  while (!isUnique && attempts < 5) {
+    const existingMerchant = await Merchant.findOne({ loginId });
+    if (!existingMerchant) {
+      isUnique = true;
+    } else {
+      const newRandomNum = Math.floor(1000 + Math.random() * 9000);
+      loginId = `${baseId}${newRandomNum}`;
+      attempts++;
+    }
+  }
+  
+  return loginId;
+};
+
+// Helper function to generate random password
+const generatePassword = () => {
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let password = '';
+  
+  // Ensure at least one number and one uppercase letter
+  password += charset.match(/[A-Z]/)[0];
+  password += charset.match(/[0-9]/)[0];
+  
+  // Generate remaining 6 characters
+  for (let i = 0; i < 6; i++) {
+    const randomIndex = Math.floor(Math.random() * charset.length);
+    password += charset[randomIndex];
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+};
+
+// Enhanced handleMerchantVerification function
 exports.handleMerchantVerification = async (req, res) => {
   try {
     console.log('Processing merchant verification:', {
@@ -106,8 +156,34 @@ exports.handleMerchantVerification = async (req, res) => {
       });
     }
 
-    // Update merchant verification status
-    merchant.isVerified = status === 'approved';
+    merchant.isVerify = status === 'approved';
+
+    if (status === 'approved') {
+      // Generate login credentials
+      const loginId = await generateLoginId(merchant.businessName);
+      const password = generatePassword();
+
+      // Update merchant with credentials
+      merchant.loginId = loginId;
+      merchant.password =await hashPassword(password); // Note: This should be hashed before saving in production
+
+      // Send email with credentials
+      const emailSubject = 'Your Merchant Account Has Been Approved';
+      const emailMessage = `
+        <h1>Congratulations! Your merchant account has been approved.</h1>
+        <p>Here are your login credentials:</p>
+        <p><strong>Login ID:</strong> ${loginId}</p>
+        <p><strong>Password:</strong> ${password}</p>
+        <p>Please change your password after your first login for security purposes.</p>
+        <p>Thank you for joining our platform!</p>
+      `;
+
+      const emailSent = await sendEmail(merchant.email, emailSubject, emailMessage);
+      if (!emailSent) {
+        console.log('Failed to send email notification');
+      }
+    }
+
     await merchant.save();
 
     // Add verification request to admin's log
@@ -135,7 +211,6 @@ exports.handleMerchantVerification = async (req, res) => {
     });
   }
 };
-
 // Update merchant status (suspend/activate)
 exports.updateMerchantStatus = async (req, res) => {
   try {
@@ -177,9 +252,7 @@ exports.getPendingVerifications = async (req, res) => {
   try {
     console.log('Fetching pending verification requests');
 
-    const merchants = await Merchant.find({
-      isVerified: false
-    }).select('-password');
+    const merchants = await Merchant.find({isVerify:false}).select('-password');
 
     console.log(`Found ${merchants.length} pending verification requests`);
     res.status(200).json({

@@ -10,7 +10,6 @@ exports.getAllCustomers = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    
     // Build filter object based on query parameters
     const filter = {};
     if (req.query.isVerified) {
