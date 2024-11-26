@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
-  merchantId: {
+  shopId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Merchant',
-    required: [true, 'Merchant ID is required.'],
+    ref: 'Shop',
+    required: [true, 'Shop ID is required.'],
   },
   name: {
     type: String,
@@ -34,6 +34,11 @@ const productSchema = new mongoose.Schema({
       },
       message: 'Tags must be an array.',
     },
+  },
+  status:{
+    type: String,
+    enum: ["active", "inactive"],
+    default: "active"
   },
   stock: {
     type: Number,

@@ -82,6 +82,34 @@ exports.getProductById = async (req, res) => {
     });
   }
 };
+exports.getAllShopProduct = async (req, res) => {
+  console.log('Executing getProductById controller');
+  try {
+    const product = await Product.findById({shopId:req.params.shopId})
+      .populate('merchantId', 'name email')
+      .populate('ratings.customerId', 'name');
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    console.log('Product details retrieved successfully');
+    res.status(200).json({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    console.error('Error in getProductById:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching product details',
+      error: error.message
+    });
+  }
+};
 
 // @desc    Remove product
 // @route   DELETE /api/admin/products/:id
