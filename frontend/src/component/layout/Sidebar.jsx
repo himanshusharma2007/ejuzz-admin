@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import { Dashboard, Person, Assignment, People, CalendarMonth, PermContactCalendar, QueryStats } from '@mui/icons-material';
