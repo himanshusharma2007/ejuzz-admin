@@ -11,6 +11,13 @@ const adminSchema = new mongoose.Schema(
       minlength: [3, "Name must be at least 3 characters long"],
       maxlength: [50, "Name cannot exceed 50 characters"],
     },
+    loginId: {
+      type: String,
+      required: [true, "Please provide login ID"],
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
     email: {
       type: String,
       required: [true, "Please provide admin email"],
@@ -31,6 +38,14 @@ const adminSchema = new mongoose.Schema(
       type: String,
       enum: ["Super Admin", "Moderator"],
       default: "Moderator",
+    },
+    resetPasswordOTP: {
+      type: String,
+      select: false
+    },
+    resetPasswordOTPExpires: {
+      type: Date,
+      select: false
     },
     permissions: [
       {
@@ -162,6 +177,49 @@ adminSchema.methods.generateAuthToken = function () {
   return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
   });
+};
+
+adminSchema.methods.generateResetPasswordOTP = function() {
+  // Generate a 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Set OTP and expiration (valid for 15 minutes)
+  this.resetPasswordOTP = crypto
+    .createHash('sha256')
+    .update(otp)
+    .digest('hex');
+  this.resetPasswordOTPExpires = Date.now() + 15 * 60 * 1000;
+  
+  return otp;
+};
+
+// Method to verify OTP
+adminSchema.methods.verifyResetPasswordOTP = function(candidateOTP) {
+  // Check if OTP is expired
+  if (this.resetPasswordOTPExpires < Date.now()) {
+    return false;
+  }
+
+  // Hash the candidate OTP and compare
+  const hashedOTP = crypto
+    .createHash('sha256')
+    .update(candidateOTP)
+    .digest('hex');
+  
+  return hashedOTP === this.resetPasswordOTP;
+};
+
+// Password strength validation method
+adminSchema.methods.validatePassword = function(password) {
+  // Password requirements:
+  // - At least 8 characters long
+  // - Contains at least one uppercase letter
+  // - Contains at least one lowercase letter
+  // - Contains at least one number
+  // - Contains at least one special character
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+  
+  return passwordRegex.test(password);
 };
 
 const Admin = mongoose.model("Admin", adminSchema);

@@ -1,50 +1,161 @@
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
-import { Dashboard, Person, Assignment, People, CalendarMonth, PermContactCalendar, QueryStats } from '@mui/icons-material';
+import { 
+  Dashboard, 
+  Person, 
+  Store, 
+  ShoppingCart, 
+  AttachMoney, 
+  AccountBalance, 
+  People, 
+  Settings,
+  ChevronRight,
+  ChevronLeft 
+} from '@mui/icons-material';
+import { Box, Tooltip } from '@mui/material';
 
 const Sidebar = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
   const sidebarItems = [
     { label: 'Dashboard', icon: <Dashboard />, link: '/' },
-    { label: 'Profile', icon: <Person />, link: '/profile' },
-    { label: 'To-Do', icon: <Assignment />, link: '/to-do' },
-    { label: 'Leads', icon: <PermContactCalendar />, link: '/leads' },
-    { label: 'Projects', icon: <Assignment />, link: '/projects' },
-    { label: 'Teams', icon: <People />, link: '/teams' },
-    { label: 'Meetings', icon: <CalendarMonth />, link: '/meetings' },
-    { label: 'Connection', icon: <QueryStats />, link: '/connection' },
-    { label: 'User Verification', icon: <PermContactCalendar />, link: '/user-verification' },
-    { label: 'Query', icon: <QueryStats />, link: '/query' },
+    { label: 'Merchants', icon: <Store />, link: '/merchants' },
+    { label: 'Users', icon: <People />, link: '/users' },
+    { label: 'Products', icon: <ShoppingCart />, link: '/products' },
+    { label: 'Transactions', icon: <AttachMoney />, link: '/transactions' },
+    { label: 'Accounts', icon: <AccountBalance />, link: '/accounts' },
+    { label: 'User Management', icon: <Person />, link: '/user-management' },
+    { label: 'Settings', icon: <Settings />, link: '/settings' }
   ];
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
   return (
     <Box
       component="nav"
-      sx={{
-        width: '250px',
-        flexShrink: 0,
-        '& .MuiListItemButton-root': {
-          px: 3,
-          py: 1.5,
-          borderRadius: 1,
-          '&.active': {
-            bgcolor: 'primary.main',
-            color: 'white',
-          },
-        },
-      }}
+      className={`
+        bg-primary-color 
+        h-full 
+        shadow-xl 
+        transition-all 
+        duration-300 
+        ease-in-out
+        ${isCollapsed ? 'w-20' : 'w-64'}
+        relative
+        overflow-hidden
+      `}
     >
-      <List>
-        {sidebarItems.map((item, index) => (
-          <ListItem key={index} disablePadding>
-            <NavLink to={item.link} className="w-full">
-              <ListItemButton>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.label} />
-              </ListItemButton>
+      {/* Sidebar Toggle Button */}
+      <button 
+        onClick={toggleSidebar}
+        className="
+          absolute 
+          top-4 
+          right-4 
+          z-10 
+          text-white 
+          hover:bg-primary-color/90 
+          p-2 
+          rounded-full 
+          transition-colors
+        "
+      >
+        {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+      </button>
+
+      {/* Logo or Brand Area */}
+      <div 
+        className={`
+          flex 
+          items-center 
+          justify-center 
+          h-20 
+          border-b 
+          border-white/10 
+          transition-all 
+          duration-300
+          ${isCollapsed ? 'px-2' : 'px-6'}
+        `}
+      >
+        <h2 
+          className={`
+            text-white 
+            font-bold 
+            transition-opacity 
+            duration-300
+            ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 text-xl'}
+          `}
+        >
+          Admin Panel
+        </h2>
+      </div>
+
+      {/* Navigation Items */}
+      <div className="py-4 px-2">
+        <nav>
+          {sidebarItems.map((item, index) => (
+            <NavLink 
+              key={index}
+              to={item.link} 
+              className={({ isActive }) => `
+                flex 
+                items-center 
+                group 
+                mb-2 
+                rounded-lg 
+                transition-all 
+                duration-300
+                ${isActive 
+                  ? 'bg-white/20 text-white' 
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'}
+                ${isCollapsed ? 'justify-center p-2' : 'p-3'}
+              `}
+            >
+              {({ isActive }) => (
+                <>
+                  {isCollapsed ? (
+                    <Tooltip title={item.label} placement="right">
+                      <span className="flex items-center justify-center">
+                        {React.cloneElement(item.icon, {
+                          className: `
+                            ${isActive ? 'text-white' : 'text-white/70'}
+                            group-hover:text-white
+                            transition-colors
+                            duration-300
+                          `
+                        })}
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    <>
+                      {React.cloneElement(item.icon, {
+                        className: `
+                          mr-3 
+                          ${isActive ? 'text-white' : 'text-white/70'}
+                          group-hover:text-white
+                          transition-colors
+                          duration-300
+                        `
+                      })}
+                      <span 
+                        className={`
+                          transition-opacity 
+                          duration-300 
+                          ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100'}
+                        `}
+                      >
+                        {item.label}
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
             </NavLink>
-          </ListItem>
-        ))}
-      </List>
+          ))}
+        </nav>
+      </div>
     </Box>
   );
 };
