@@ -11,7 +11,8 @@ import {
   Settings,
   ChevronRight,
   ChevronLeft ,
-  Person
+  Person,
+  AdminPanelSettings
 } from '@mui/icons-material';
 import { Box, Tooltip } from '@mui/material';
 
@@ -24,7 +25,7 @@ const Sidebar = () => {
     { label: 'Users', icon: <People />, link: '/users' },
     { label: 'Products', icon: <ShoppingCart />, link: '/products' },
     { label: 'Transactions', icon: <AttachMoney />, link: '/transactions' },
-    { label: 'Orders', icon: <LocalShipping />, link: '/user-management' },
+    { label: 'Sub Admins', icon:<AdminPanelSettings />, link: '/sub-admins' },
     { label: 'Accounts', icon: <AccountBalance />, link: '/accounts' },
     { label: 'Profile', icon: <Person />, link: '/profile' },
     { label: 'Settings', icon: <Settings />, link: '/settings' }

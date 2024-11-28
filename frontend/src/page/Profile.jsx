@@ -18,7 +18,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen ">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6">

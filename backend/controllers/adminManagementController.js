@@ -1,10 +1,11 @@
 const Admin = require("../models/adminModel");
-
+const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");
 const getAllAdmins = async (req, res) => {
   try {
     console.log("Getting all admin accounts...");
 
-    const admins = await Admin.find({})
+    const admins = await Admin.find({role:"Moderator"})
       .select("-password -verificationRequests -systemReports -transactionsLog")
       .sort("-createdAt");
 
@@ -62,6 +63,9 @@ const getSingleAdmin = async (req, res) => {
 // @desc    Create admin
 // @route   POST /api/v1/admins
 // @access  Private/Super Admin
+// @desc    Create admin
+// @route   POST /api/v1/admins
+// @access  Private/Super Admin
 const createAdmin = async (req, res) => {
   try {
     console.log("Starting add new admin process...");
@@ -75,12 +79,88 @@ const createAdmin = async (req, res) => {
       });
     }
 
-    const admin = await Admin.create(req.body);
+    // Destructure name from request body
+    const { name, email } = req.body;
 
-    console.log("New admin added successfully");
+    // Split name into first and last name
+    const [firstName, lastName] = name.split(' ');
+
+    // Generate unique login ID
+    let loginId = generateLoginId(firstName);
+
+    // Ensure login ID is unique
+    let existingLoginId = await Admin.findOne({ loginId });
+    while (existingLoginId) {
+      loginId = generateLoginId(firstName);
+      existingLoginId = await Admin.findOne({ loginId });
+    }
+
+    // Generate random password
+    const password = generateRandomPassword();
+
+    // Check if admin already exists
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      console.log("Add admin failed: Email already exists");
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+
+    // Create new admin
+    const admin = await Admin.create({
+      name,
+      email,
+      loginId,
+      password,
+      role: req.body.role || "Moderator",
+      permissions:
+        req.body.role === "Super Admin"
+          ? [
+              "manage_admins",
+              "manage_merchants",
+              "manage_customers",
+              "manage_products",
+              "manage_orders",
+              "manage_transactions",
+              "manage_reports",
+            ]
+          : ["manage_merchants", "manage_customers", "manage_products"],
+    });
+
+    // Prepare email content
+    const emailSubject = "Your Admin Account Credentials";
+    const emailMessage = `
+      <html>
+        <body>
+          <h2>Welcome to the Admin Portal</h2>
+          <p>An admin account has been created for you.</p>
+          <p><strong>Login ID:</strong> ${loginId}</p>
+          <p><strong>Temporary Password:</strong> ${password}</p>
+          <p>Please log in and change your password immediately.</p>
+        </body>
+      </html>
+    `;
+
+    // Send email with login credentials
+    const emailSent = await sendEmail(email, emailSubject, emailMessage);
+
+    if (!emailSent) {
+      console.log("Failed to send email to admin");
+      // You might want to handle this case, perhaps by adding a flag to the admin record
+    }
+
+    console.log("Admin created successfully");
     res.status(201).json({
       success: true,
-      data: admin,
+      data: { 
+        name: admin.name, 
+        email: admin.email, 
+        loginId: admin.loginId, 
+        role: admin.role 
+      },
+      message: "Admin account created successfully"
     });
   } catch (error) {
     console.error("Add admin error:", error);
@@ -91,6 +171,27 @@ const createAdmin = async (req, res) => {
     });
   }
 };
+
+// Helper functions (to be added at the top of the file)
+
+
+// Function to generate a unique login ID
+const generateLoginId = (firstName) => {
+  // Remove any non-alphanumeric characters and convert to lowercase
+  const cleanFirstName = firstName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  
+  // Add a random 3-digit number to ensure uniqueness
+  const randomSuffix = Math.floor(100 + Math.random() * 900);
+  
+  return `${cleanFirstName}${randomSuffix}`;
+};
+
+// Function to generate a random 8-digit password
+const generateRandomPassword = () => {
+  return crypto.randomBytes(4).toString('hex');
+};
+
+
 
 // @desc    Update admin
 // @route   PATCH /api/v1/admins/:id
