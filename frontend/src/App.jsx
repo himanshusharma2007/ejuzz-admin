@@ -12,6 +12,7 @@ import { useDispatch } from "react-redux";
 import Dashboard from "./page/Dashboard";
 import Profile from "./page/Profile";
 import MerchantManagement from "./page/MerchantManagement";
+import Products from "./page/Products";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -40,6 +41,14 @@ const App = () => {
           element={
             <Layout>
               <Profile />
+            </Layout>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <Layout>
+              <Products />
             </Layout>
           }
         />
