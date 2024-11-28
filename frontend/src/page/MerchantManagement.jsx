@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import merchantService from "../services/merchantService"; // Import the merchant service
 import { toast } from "sonner"; // Assuming you're using sonner for notifications
+import { useNavigate } from "react-router-dom";
 
 const MerchantManagement = () => {
   // State Management
@@ -31,10 +32,10 @@ const MerchantManagement = () => {
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [merchantsPerPage] = useState(10);
-
+  const navigate = useNavigate();
   // Modal States
   const [selectedMerchant, setSelectedMerchant] = useState(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+//   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
 
   // Fetch Merchants
@@ -71,18 +72,18 @@ const MerchantManagement = () => {
     }
   };
 
-  // Fetch Merchant Details
-  const fetchMerchantDetails = async (merchantId) => {
-    try {
-      const response = await merchantService.getMerchantDetails(merchantId);
-      setSelectedMerchant(response.data);
-      setIsDetailsModalOpen(true);
-    } catch (err) {
-      toast.error("Failed to fetch merchant details", {
-        description: err.message,
-      });
-    }
-  };
+//   // Fetch Merchant Details
+//   const fetchMerchantDetails = async (merchantId) => {
+//     try {
+//       const response = await merchantService.getMerchantDetails(merchantId);
+//       setSelectedMerchant(response.data);
+//       setIsDetailsModalOpen(true);
+//     } catch (err) {
+//       toast.error("Failed to fetch merchant details", {
+//         description: err.message,
+//       });
+//     }
+//   };
 
   // Verification Handler
   const handleVerification = async (merchantId, status) => {
@@ -98,20 +99,20 @@ const MerchantManagement = () => {
     }
   };
 
-  // Status Change Handler
-  const handleStatusChange = async (merchantId, active) => {
-    try {
-      await merchantService.updateMerchantStatus(merchantId, { active });
-      toast.success(
-        `Merchant ${active ? "activated" : "suspended"} successfully`
-      );
-      fetchMerchants();
-    } catch (err) {
-      toast.error("Failed to update merchant status", {
-        description: err.message,
-      });
-    }
-  };
+//   // Status Change Handler
+//   const handleStatusChange = async (merchantId, active) => {
+//     try {
+//       await merchantService.updateMerchantStatus(merchantId, { active });
+//       toast.success(
+//         `Merchant ${active ? "activated" : "suspended"} successfully`
+//       );
+//       fetchMerchants();
+//     } catch (err) {
+//       toast.error("Failed to update merchant status", {
+//         description: err.message,
+//       });
+//     }
+//   };
 
   // Advanced Filtering Effect
   useEffect(() => {
@@ -263,14 +264,11 @@ const MerchantManagement = () => {
               <td className="px-4 py-3 flex space-x-2">
                 <button
                   className="text-blue-500 hover:text-blue-700"
-                  onClick={() => {
-                    setSelectedMerchant(merchant);
-                    setIsDetailsModalOpen(true);
-                  }}
+                  onClick={() => navigate(`/merchants/${merchant._id}`)}
                 >
                   View Details
                 </button>
-                {!merchant.isVerify && (
+                {/* {!merchant.isVerify && (
                   <button
                     className="text-green-500 hover:text-green-700"
                     onClick={() => {
@@ -280,7 +278,7 @@ const MerchantManagement = () => {
                   >
                     Verify
                   </button>
-                )}
+                )} */}
               </td>
             </tr>
           ))}
@@ -317,41 +315,41 @@ const MerchantManagement = () => {
     </div>
   );
 
-  // Merchant Details Modal
-  const renderDetailsModal = () =>
-    selectedMerchant && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-white rounded-lg shadow-xl p-6 w-96">
-          <h2 className="text-xl font-bold mb-4">Merchant Details</h2>
-          <div className="space-y-2">
-            <p>
-              <strong>Name:</strong> {selectedMerchant.name}
-            </p>
-            <p>
-              <strong>Email:</strong> {selectedMerchant.email}
-            </p>
-            <p>
-              <strong>Phone:</strong> {selectedMerchant.phoneNo}
-            </p>
-            <p>
-              <strong>Address:</strong> {selectedMerchant.address}
-            </p>
-            <p>
-              <strong>Status:</strong>{" "}
-              {selectedMerchant.isVerify ? "Verified" : "Pending"}
-            </p>
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                onClick={() => setIsDetailsModalOpen(false)}
-                className="px-4 py-2 bg-gray-200 rounded"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+//   // Merchant Details Modal
+//   const renderDetailsModal = () =>
+//     selectedMerchant && (
+//       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+//         <div className="bg-white rounded-lg shadow-xl p-6 w-96">
+//           <h2 className="text-xl font-bold mb-4">Merchant Details</h2>
+//           <div className="space-y-2">
+//             <p>
+//               <strong>Name:</strong> {selectedMerchant.name}
+//             </p>
+//             <p>
+//               <strong>Email:</strong> {selectedMerchant.email}
+//             </p>
+//             <p>
+//               <strong>Phone:</strong> {selectedMerchant.phoneNo}
+//             </p>
+//             <p>
+//               <strong>Address:</strong> {selectedMerchant.address}
+//             </p>
+//             <p>
+//               <strong>Status:</strong>{" "}
+//               {selectedMerchant.isVerify ? "Verified" : "Pending"}
+//             </p>
+//             <div className="flex justify-end space-x-2 mt-4">
+//               <button
+//                 onClick={() => setIsDetailsModalOpen(false)}
+//                 className="px-4 py-2 bg-gray-200 rounded"
+//               >
+//                 Close
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     );
 
   const renderVerificationModal = () =>
     selectedMerchant && (
@@ -422,7 +420,7 @@ const MerchantManagement = () => {
 
       {renderMerchantTable()}
 
-      {isDetailsModalOpen && renderDetailsModal()}
+      {/* {isDetailsModalOpen && renderDetailsModal()} */}
       {isVerificationModalOpen && renderVerificationModal()}
     </div>
   );
