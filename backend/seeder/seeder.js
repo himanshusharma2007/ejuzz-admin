@@ -279,88 +279,87 @@ const shops = [
 
 // Seeder function
 const seedDatabase = async () => {
-    try {
-      // Connect to MongoDB
-      await mongoose.connect(process.env.MONGO_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-      console.log("Connected to MongoDB");
-  
-      // Clear existing data
-      await Customer.deleteMany();
-      await Merchant.deleteMany();
-      await Product.deleteMany();
-      await Shop.deleteMany();
-      await Order.deleteMany(); // Clear previous orders
-      console.log("Cleared existing data");
-  
-      // Hash passwords and create customers
-      const hashedCustomers = await Promise.all(
-        customers.map(async (customer) => {
-          const salt = await bcrypt.genSalt(10);
-          const hashedPassword = await bcrypt.hash(customer.password, salt);
-          return { ...customer, password: hashedPassword };
-        })
-      );
-      const createdCustomers = await Customer.create(hashedCustomers);
-      console.log(`${createdCustomers.length} customers created`);
-  
-      // Hash passwords and create merchants
-      const hashedMerchants = await Promise.all(
-        merchants.map(async (merchant) => {
-          const salt = await bcrypt.genSalt(10);
-          const hashedPassword = await bcrypt.hash(merchant.password, salt);
-          return { ...merchant, password: hashedPassword };
-        })
-      );
-      const createdMerchants = await Merchant.create(hashedMerchants);
-      console.log(`${createdMerchants.length} merchants created`);
-  
-      // Add merchantId to products and create them
-      const productsWithMerchantId = products.map((product) => ({
-        ...product,
-        merchantId: createdMerchants[0]._id, // Assigning to first merchant for demo
-      }));
-      const createdProducts = await Product.create(productsWithMerchantId);
-      console.log(`${createdProducts.length} products created`);
-  
-      // Add merchantId to shops and create them
-      const shopsWithMerchantId = shops.map((shop) => ({
-        ...shop,
-        merchantId: createdMerchants[0]._id, // Assigning to first merchant for demo
-      }));
-      const createdShops = await Shop.create(shopsWithMerchantId);
-      console.log(`${createdShops.length} shops created`);
-  
-      // Update merchant with products
-      await Merchant.findByIdAndUpdate(createdMerchants[0]._id, {
-        $push: { products: { $each: createdProducts.map((p) => p._id) } },
-      });
-  
-      // Add dummy orders
-      const ordersWithReferences = orders.map((order, index) => ({
-        ...order,
-        customerId: createdCustomers[index % createdCustomers.length]._id, // Rotate customers
-        merchantId: createdMerchants[0]._id, // Assign all to the first merchant for demo
-        products: [
-          {
-            productId: createdProducts[index % createdProducts.length]._id, // Rotate products
-            quantity: order.products[0].quantity,
-          },
-        ],
-      }));
-      const createdOrders = await Order.create(ordersWithReferences);
-      console.log(`${createdOrders.length} orders created`);
-  
-      console.log("Database seeded successfully!");
-    //   process.exit(0);
-    } catch (error) {
-      console.error("Error seeding database:", error);
-      process.exit(1);
-    }
-  };
-  
+  try {
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to MongoDB");
 
-// Run seeder
+    // Clear existing data
+    await Customer.deleteMany();
+    await Merchant.deleteMany();
+    await Product.deleteMany();
+    await Shop.deleteMany();
+    await Order.deleteMany(); // Clear previous orders
+    console.log("Cleared existing data");
+
+    // Hash passwords and create customers
+    const hashedCustomers = await Promise.all(
+      customers.map(async (customer) => {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(customer.password, salt);
+        return { ...customer, password: hashedPassword };
+      })
+    );
+    const createdCustomers = await Customer.create(hashedCustomers);
+    console.log(`${createdCustomers.length} customers created`);
+
+    // Hash passwords and create merchants
+    const hashedMerchants = await Promise.all(
+      merchants.map(async (merchant) => {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(merchant.password, salt);
+        return { ...merchant, password: hashedPassword };
+      })
+    );
+    const createdMerchants = await Merchant.create(hashedMerchants);
+    console.log(`${createdMerchants.length} merchants created`);
+
+    // Add merchantId to products and create them
+    const productsWithMerchantId = products.map((product) => ({
+      ...product,
+      merchantId: createdMerchants[0]._id, // Assigning to first merchant for demo
+    }));
+    const createdProducts = await Product.create(productsWithMerchantId);
+    console.log(`${createdProducts.length} products created`);
+
+    // Add merchantId to shops and create them
+    const shopsWithMerchantId = shops.map((shop) => ({
+      ...shop,
+      merchantId: createdMerchants[0]._id, // Assigning to first merchant for demo
+    }));
+    const createdShops = await Shop.create(shopsWithMerchantId);
+    console.log(`${createdShops.length} shops created`);
+
+    // Update merchant with products
+    await Merchant.findByIdAndUpdate(createdMerchants[0]._id, {
+      $push: { products: { $each: createdProducts.map((p) => p._id) } },
+    });
+
+    // Add dummy orders
+    const ordersWithReferences = orders.map((order, index) => ({
+      ...order,
+      customerId: createdCustomers[index % createdCustomers.length]._id, // Rotate customers
+      merchantId: createdMerchants[0]._id, // Assign all to the first merchant for demo
+      products: [
+        {
+          productId: createdProducts[index % createdProducts.length]._id, // Rotate products
+          quantity: order.products[0].quantity,
+        },
+      ],
+    }));
+    const createdOrders = await Order.create(ordersWithReferences);
+    console.log(`${createdOrders.length} orders created`);
+
+    console.log("Database seeded successfully!");
+    //   process.exit(0);
+  } catch (error) {
+    console.error("Error seeding database:", error);
+    process.exit(1);
+  }
+};
+
+// Run seederx*
 module.exports = seedDatabase;

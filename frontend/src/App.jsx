@@ -10,6 +10,7 @@ import Layout from "./component/layout/Layout";
 import { fetchUser } from "./redux/slices/userSlice";
 import { useDispatch } from "react-redux";
 import Dashboard from "./page/Dashboard";
+import Profile from "./page/Profile";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -30,9 +31,17 @@ const App = () => {
         >
           {/* Add your CRM pages here */}
           <Route index element={<div>Dashboard</div>} />
-          <Route path="/profile" element={<div>Profile</div>} />
+
           {/* Add more routes for other CRM pages */}
         </Route>
+        <Route
+          path="/profile"
+          element={
+            <Layout>
+              <Profile />
+            </Layout>
+          }
+        />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   Dashboard, 
-  Person, 
+  AccountBalance, 
   Store, 
   ShoppingCart, 
   AttachMoney, 
-  AccountBalance, 
+  LocalShipping, 
   People, 
   Settings,
   ChevronRight,
-  ChevronLeft 
+  ChevronLeft ,
+  Person
 } from '@mui/icons-material';
 import { Box, Tooltip } from '@mui/material';
 
@@ -23,8 +24,9 @@ const Sidebar = () => {
     { label: 'Users', icon: <People />, link: '/users' },
     { label: 'Products', icon: <ShoppingCart />, link: '/products' },
     { label: 'Transactions', icon: <AttachMoney />, link: '/transactions' },
+    { label: 'Orders', icon: <LocalShipping />, link: '/user-management' },
     { label: 'Accounts', icon: <AccountBalance />, link: '/accounts' },
-    { label: 'User Management', icon: <Person />, link: '/user-management' },
+    { label: 'Profile', icon: <Person />, link: '/profile' },
     { label: 'Settings', icon: <Settings />, link: '/settings' }
   ];
 
@@ -42,7 +44,7 @@ const Sidebar = () => {
         transition-all 
         duration-300 
         ease-in-out
-        ${isCollapsed ? 'w-20' : 'w-64'}
+        ${isCollapsed ? 'w-20' : 'w-72'}
         relative
         overflow-hidden
       `}

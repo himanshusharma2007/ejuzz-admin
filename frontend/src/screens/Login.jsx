@@ -6,28 +6,33 @@ const LoginPage = () => {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false); // Add loading state
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    console.log("handle login called")
+    console.log("handle login called");
     e.preventDefault(); // Prevent default form submission
     try {
-      // Clear any previous errors
+      // Clear any previous errors and set loading state
       setError(null);
+      setLoading(true);
 
       // Call login service with loginId and password
       await authService.login(loginId, password);
-      
+
       // Navigate to dashboard on successful login
       navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
-      
+
       // Set error message to display to the user
       setError(
         error.response?.data?.message || 
         "Login failed. Please check your credentials."
       );
+    } finally {
+      // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -83,9 +88,12 @@ const LoginPage = () => {
           <div className="mb-6">
             <button
               type="submit"
-              className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-300"
+              className={`w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-300 ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={loading} // Disable button when loading
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
           </div>
         </form>

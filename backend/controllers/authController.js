@@ -212,6 +212,28 @@ exports.signup = async (req, res) => {
           : ["manage_merchants", "manage_customers", "manage_products"],
     });
 
+    // Prepare email content
+    const emailSubject = "Your Admin Account Credentials";
+    const emailMessage = `
+      <html>
+        <body>
+          <h2>Welcome to the Admin Portal</h2>
+          <p>Your admin account has been created successfully.</p>
+          <p><strong>Login ID:</strong> ${loginId}</p>
+          <p><strong>Temporary Password:</strong> ${password}</p>
+          <p>Please log in and change your password immediately.</p>
+        </body>
+      </html>
+    `;
+
+    // Send email with login credentials
+    const emailSent = await sendEmail(email, emailSubject, emailMessage);
+
+    if (!emailSent) {
+      console.log("Failed to send email to admin");
+      // You might want to handle this case, perhaps by adding a flag to the admin record
+    }
+
     console.log("Admin created successfully");
     sendTokenResponse(admin, 201, res, { loginId, password });
   } catch (error) {
