@@ -11,6 +11,7 @@ import { fetchUser } from "./redux/slices/userSlice";
 import { useDispatch } from "react-redux";
 import Dashboard from "./page/Dashboard";
 import Profile from "./page/Profile";
+import MerchantManagement from "./page/MerchantManagement";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -39,6 +40,14 @@ const App = () => {
           element={
             <Layout>
               <Profile />
+            </Layout>
+          }
+        />
+        <Route
+          path="/merchants"
+          element={
+            <Layout>
+              <MerchantManagement />
             </Layout>
           }
         />
