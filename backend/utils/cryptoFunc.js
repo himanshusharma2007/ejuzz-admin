@@ -16,11 +16,21 @@ const encrypt = (text) => {
 
 // Function to decrypt data
 const decrypt = (encryptedText) => {
+  // Ensure that encryptedText is in the correct format
+  if (!encryptedText || !encryptedText.includes(":")) {
+    throw new Error("Invalid encrypted text format");
+  }
   const [iv, encrypted] = encryptedText.split(":");
-  const decipher = crypto.createDecipheriv(CRYPTO_KEY, Buffer.from(ENCRYPTION_KEY), Buffer.from(iv, "hex"));
+  // Validate that both iv and encrypted parts are not empty
+  if (!iv || !encrypted) {
+    throw new Error("Invalid encrypted text format: missing IV or encrypted data");
+  }
+  const decipher = crypto.createDecipheriv(process.env.CRYPTO_KEY, Buffer.from(process.env.CRYPTO_ENCRYPTION_KEY), Buffer.from(iv, "hex"));
   let decrypted = decipher.update(encrypted, "hex", "utf8");
   decrypted += decipher.final("utf8");
+  console.log(decrypted)
   return decrypted;
 };
+
 
 module.exports = {encrypt, decrypt}

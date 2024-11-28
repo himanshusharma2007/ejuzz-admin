@@ -57,8 +57,7 @@ exports.getMerchantDetails = async (req, res) => {
     console.log("Fetching merchant details for ID:", req.params.id);
 
     const merchant = await Merchant.findById(req.params.id)
-      .select("-password")
-      .populate("products");
+      .select("+password")
 
     if (!merchant) {
       console.log("Merchant not found");
@@ -68,10 +67,21 @@ exports.getMerchantDetails = async (req, res) => {
       });
     }
 
+    const decryptedData = merchant.decryptBankInfo();
+
+    if(!decryptedData) return res.status(500).json({error: "error in decrypt data"})
+
+    merchant.bankInformation = decryptedData.bankInformation
+    merchant.govId = decryptedData.document.govId
+    merchant.businessLicense = decryptedData.document.businessLicense
+    merchant.taxDocument = decryptedData.document.taxDocument
+
+    const shop = await Shop.findOne({merchantId: merchant._id})
+
     console.log("Merchant details fetched successfully");
     res.status(200).json({
       success: true,
-      data: merchant,
+      data: {merchant, shop},
     });
   } catch (error) {
     console.error("Error in getMerchantDetails:", error);

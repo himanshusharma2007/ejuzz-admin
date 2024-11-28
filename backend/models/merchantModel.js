@@ -141,6 +141,7 @@ merchantSchema.pre("save", function (next) {
 
 // Static method to decrypt bank information
 merchantSchema.methods.decryptBankInfo = function () {
+  console.log("decrypt")
   return {
     bankInformation: {
       branchCode: decrypt(this.bankInformation.branchCode),
