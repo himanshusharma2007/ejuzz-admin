@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import merchantService from "../services/merchantService";
 import { toast } from "sonner";
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import { Download } from 'lucide-react';
 import {
   UserCheck,
   UserX,
@@ -13,14 +16,101 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { X, ZoomIn } from 'lucide-react';
 
+const ImageModal = ({ src, alt, onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div className="relative max-w-[90%] max-h-[90%] w-auto h-auto">
+        <button 
+          onClick={onClose} 
+          className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+        >
+          <X size={32} />
+        </button>
+        <img 
+          src={src} 
+          alt={alt} 
+          className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+        />
+      </div>
+    </div>
+  );
+};
+
+const MerchantDetailsPDFExport = ({ merchantDetails }) => {
+    const pdfRef = useRef();
+  
+    const downloadPDF = async () => {
+      const input = pdfRef.current;
+      
+      // Increase scale for better quality
+      const canvas = await html2canvas(input, { 
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        allowTaint: true 
+      });
+  
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+  
+      // PDF Page Dimensions
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+  
+      // Add image to PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight, '', 'FAST');
+  
+      // Save PDF
+      pdf.save(`Merchant_Details_${merchantDetails.merchant.name}.pdf`);
+    };
+  
+    return (
+      <div>
+      
+  
+        {/* Download Button */}
+        <button 
+          onClick={downloadPDF}
+          className="fixed bottom-4 right-4 bg-blue-500 text-white p-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center"
+        >
+          <Download className="mr-2" /> Download PDF
+        </button>
+      </div>
+    );
+  };
 const MerchantDetails = () => {
   const [merchantDetails, setMerchantDetails] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { merchantId } = useParams();
   const navigate = useNavigate();
 
+  const ImageViewer = ({ src, alt, label }) => (
+    <div 
+      className="flex flex-col items-center cursor-pointer group relative"
+      onClick={() => setSelectedImage({ src, alt })}
+    >
+      <div className="relative">
+        <img
+          src={src}
+          alt={alt}
+          className="w-48 h-48 object-cover rounded-lg shadow-md mb-2 group-hover:opacity-70 transition-opacity"
+        />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <ZoomIn className="text-white bg-black/50 rounded-full p-2" size={40} />
+        </div>
+      </div>
+      <span className="text-sm text-gray-600">{label}</span>
+    </div>
+  );
   // Fetch Merchant Details
   const fetchMerchantDetails = async () => {
     try {
@@ -66,17 +156,7 @@ const MerchantDetails = () => {
     }
   };
 
-  // Image Viewer
-  const ImageViewer = ({ src, alt, label }) => (
-    <div className="flex flex-col items-center">
-      <img
-        src={src}
-        alt={alt}
-        className="w-48 h-48 object-cover rounded-lg shadow-md mb-2"
-      />
-      <span className="text-sm text-gray-600">{label}</span>
-    </div>
-  );
+
 
   // Initial Data Fetch
   useEffect(() => {
@@ -265,7 +345,6 @@ const MerchantDetails = () => {
         </div>
       </div>
 
-      {/* Document Verification Section */}
       <div className="bg-white shadow-md rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-4 border-b pb-2">
           Uploaded Documents
@@ -293,6 +372,16 @@ const MerchantDetails = () => {
           />
         </div>
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <ImageModal 
+          src={selectedImage.src} 
+          alt={selectedImage.alt} 
+          onClose={() => setSelectedImage(null)} 
+        />
+      )}
+       <MerchantDetailsPDFExport merchantDetails={merchantDetails} />
     </div>
   );
 };
