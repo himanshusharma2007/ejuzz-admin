@@ -145,6 +145,11 @@ const generatePassword = () => {
     .join("");
 };
 
+const generatePaymentId = (email) =>{
+  const emailUserName = email.split("@")[0]
+  return `${emailUserName}@ejuuz`
+}
+
 // Enhanced handleMerchantVerification function
 exports.handleMerchantVerification = async (req, res) => {
   try {
@@ -179,10 +184,12 @@ exports.handleMerchantVerification = async (req, res) => {
       console.log('merchantShop', merchantShop)
       const loginId = await generateLoginId(merchantShop?.name);
       const password = generatePassword();
+      const paymentId = generatePaymentId(merchant.email)
 
       // Update merchant with credentials
       merchant.loginId = loginId;
       merchant.password = await hashPassword(password); // Note: This should be hashed before saving in production
+      merchant.paymentId = paymentId
 
       // Send email with credentials
       const emailSubject = "Your Merchant Account Has Been Approved";
