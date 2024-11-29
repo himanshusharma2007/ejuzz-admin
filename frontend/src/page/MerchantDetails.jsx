@@ -4,7 +4,7 @@ import merchantService from "../services/merchantService";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import { Download } from "lucide-react";
+import { BanIcon, Download } from "lucide-react";
 import {
   UserCheck,
   UserX,
@@ -212,12 +212,21 @@ const MerchantDetails = () => {
                 {verifying ? "Verifying..." : <UserCheck className="mr-2" />} Verify Merchant
               </button>
             ) : (
-              <button
-                onClick={() => handleStatusChange(true)}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
-              >
-                <UserCheck className="mr-2" /> Block Merchant
-              </button>
+              merchant.isActive ? (
+                <button
+                  onClick={() => handleStatusChange(false)}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
+                >
+                  <UserCheck className="mr-2" /> Block Merchant
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleStatusChange(true)}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
+                >
+                  <UserCheck className="mr-2" /> Activate Merchant
+                </button>
+              )
             )}
           </div>
         </div>
@@ -262,12 +271,19 @@ const MerchantDetails = () => {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col items-center">
+            <div className="  relative flex flex-col items-center">
               <img
                 src={merchant.profile.url}
                 alt="Merchant Profile"
                 className="w-64 h-64 object-cover rounded-full shadow-lg"
               />
+              {!merchant.isActive && (
+                <div className="absolute  top-2 right-2 flex space-x-2 items-center justify-center">
+                  <BanIcon  className="text-red-600"/>
+                  <p className="text-red-600 font-bold text-xl">  Blocked</p>
+                </div>
+                
+              )}
               <div className="mt-4 flex items-center">
                 {merchant.isVerify ? (
                   <CheckCircle className="mr-2 text-green-500" />

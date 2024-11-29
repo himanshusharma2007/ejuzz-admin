@@ -7,6 +7,7 @@ const merchantRoutes = require("./routes/merchantManagementRoutes");
 const customersRoutes = require("./routes/customerManagementRoutes");
 const shopRoutes = require("./routes/shopManagementRoutes");
 const productRoutes = require("./routes/productManagementRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const seedDatabase = require("./seeder/seeder");
@@ -29,7 +30,8 @@ app.use("/api/admins", adminRoutes);
 app.use("/api/merchants", merchantRoutes);
 app.use("/api/customers", customersRoutes);
 app.use("/api/shop", shopRoutes);
-app.use("/api/product", productRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.listen(PORT, async () => {
   await connectDB(process.env.MONGO_URI);

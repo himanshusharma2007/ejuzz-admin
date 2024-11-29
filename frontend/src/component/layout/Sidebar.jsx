@@ -23,7 +23,7 @@ const Sidebar = () => {
     { label: 'Dashboard', icon: <Dashboard />, link: '/' },
     { label: 'Merchants', icon: <Store />, link: '/merchants' },
     { label: 'Users', icon: <People />, link: '/users' },
-    { label: 'Products', icon: <ShoppingCart />, link: '/products' },
+    { label: 'Listed Products', icon: <ShoppingCart />, link: '/products' },
     { label: 'Transactions', icon: <AttachMoney />, link: '/transactions' },
     { label: 'Sub Admins', icon:<AdminPanelSettings />, link: '/sub-admins' },
     { label: 'Accounts', icon: <AccountBalance />, link: '/accounts' },

@@ -1,7 +1,7 @@
 // controllers/productManagementController.js
 const Product = require('../models/productModel');
 
-// @desc    Get all products with pagination and filters
+// @desc    Get all products by merchant ID with pagination
 // @route   GET /api/admin/products
 // @access  Private (Admin only)
 exports.getAllProducts = async (req, res) => {
@@ -10,19 +10,18 @@ exports.getAllProducts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const merchantId = req.params.merchantId;
 
-    // Build filter object based on query parameters
-    const filter = {};
-    if (req.query.category) filter.category = req.query.category;
-    if (req.query.merchantId) filter.merchantId = req.query.merchantId;
-    if (req.query.minPrice) filter.price = { $gte: parseFloat(req.query.minPrice) };
-    if (req.query.maxPrice) {
-      filter.price = { ...filter.price, $lte: parseFloat(req.query.maxPrice) };
+    if (!merchantId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Merchant ID is required'
+      });
     }
 
-    // Execute query with filters and pagination
-    const products = await Product.find(filter)
-      .populate('merchantId', 'name email')
+    // Execute query with pagination
+    const products = await Product.find({merchantId})
+      .populate('merchantId', 'name email shopName')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -30,7 +29,7 @@ exports.getAllProducts = async (req, res) => {
     // Get total count for pagination
     const totalProducts = await Product.countDocuments(filter);
 
-    console.log(`Retrieved ${products.length} products`);
+    console.log(`Retrieved ${products.length} products for merchant ${merchantId}`);
     
     res.status(200).json({
       success: true,
@@ -45,7 +44,7 @@ exports.getAllProducts = async (req, res) => {
     console.error('Error in getAllProducts:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching products',
+      message: 'Error fetching merchant products',
       error: error.message
     });
   }
