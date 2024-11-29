@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { encrypt, decrypt } = require("../../utils/cryptoFunc");
+const { encrypt, decrypt } = require("../utils/cryptoFunc");
 
 // Schema for Merchant Information
 const merchantSchema = new mongoose.Schema({
@@ -147,7 +147,7 @@ const merchantSchema = new mongoose.Schema({
 merchantSchema.pre("save", function (next) {
   if (this.isModified("bankInformation")) {
     this.bankInformation.branchCode = encrypt(this.bankInformation.branchCode);
-    this.bankInformation.accountName = encrypt(this.bankInformation.accountName);
+    this.bankInformation.accountType = encrypt(this.bankInformation.accountType);
     this.bankInformation.accountHolder = encrypt(this.bankInformation.accountHolder);
     this.bankInformation.bankName = encrypt(this.bankInformation.bankName);
     this.bankInformation.branchName = encrypt(this.bankInformation.branchName);
@@ -167,7 +167,7 @@ merchantSchema.methods.decryptBankInfo = function () {
   return {
     bankInformation: {
       branchCode: decrypt(this.bankInformation.branchCode),
-      accountName: decrypt(this.bankInformation.accountName),
+      accountType: decrypt(this.bankInformation.accountType),
       accountHolder: decrypt(this.bankInformation.accountHolder),
       bankName: decrypt(this.bankInformation.bankName),
       branchName: decrypt(this.bankInformation.branchName),
