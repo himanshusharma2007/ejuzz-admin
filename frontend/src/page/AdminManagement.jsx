@@ -61,6 +61,7 @@ const AdminManagementPage = () => {
             console.error('Failed to fetch admins', error);
         }
     }, []);
+   
 
     useEffect(() => {
         fetchAdmins();
