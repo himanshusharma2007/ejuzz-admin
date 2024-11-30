@@ -9,7 +9,7 @@ const {
 } = require("../controllers/productManagementController");
 
 // Product management routes
-router.get("/:merchantId", protect, getAllProducts);
+router.get("/:shopId", protect, getAllProducts);
 router.get("/:id", protect, getProductById);
 router.delete("/:id", protect, removeProduct);
 

@@ -15,7 +15,7 @@ import {
   AdminPanelSettings
 } from '@mui/icons-material';
 import { Box, Tooltip } from '@mui/material';
-
+import logo from '../../assets/images/ejuuzlogo.png';
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -23,7 +23,7 @@ const Sidebar = () => {
     { label: 'Dashboard', icon: <Dashboard />, link: '/' },
     { label: 'Merchants', icon: <Store />, link: '/merchants' },
     { label: 'Users', icon: <People />, link: '/users' },
-    { label: 'Listed Products', icon: <ShoppingCart />, link: '/products' },
+    { label: 'Shops', icon: <ShoppingCart />, link: '/shops' },
     { label: 'Transactions', icon: <AttachMoney />, link: '/transactions' },
     { label: 'Sub Admins', icon:<AdminPanelSettings />, link: '/sub-admins' },
     { label: 'Accounts', icon: <AccountBalance />, link: '/accounts' },
@@ -72,6 +72,7 @@ const Sidebar = () => {
       <div 
         className={`
           flex 
+          flex-col
           items-center 
           justify-center 
           h-20 

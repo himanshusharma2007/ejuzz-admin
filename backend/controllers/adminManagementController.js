@@ -5,7 +5,7 @@ const getAllAdmins = async (req, res) => {
   try {
     console.log("Getting all admin accounts...");
 
-    const admins = await Admin.find({role:"Moderator"})
+    const admins = await Admin.find({})
       .select("-password -verificationRequests -systemReports -transactionsLog")
       .sort("-createdAt");
 

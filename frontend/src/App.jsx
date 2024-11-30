@@ -15,6 +15,8 @@ import MerchantManagement from "./page/MerchantManagement";
 import Products from "./page/Products";
 import AdminManagementPage from "./page/AdminManagement";
 import MerchantDetails from "./page/MerchantDetails";
+import ShopsList from "./page/Shop";
+import ShopDetails from "./page/ShopDetails.";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -67,6 +69,22 @@ const App = () => {
           element={
             <Layout>
               <Products />
+            </Layout>
+          }
+        />
+        <Route
+          path="/shops"
+          element={
+            <Layout>
+              <ShopsList />
+            </Layout>
+          }
+        />
+        <Route
+          path="/shops/:shopId"
+          element={
+            <Layout>
+              <ShopDetails />
             </Layout>
           }
         />

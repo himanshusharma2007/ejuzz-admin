@@ -56,7 +56,6 @@ exports.getShopById = async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id)
       .populate('merchantId', 'name email')
-      .populate('reviews.customerId', 'name');
 
     if (!shop) {
       return res.status(404).json({

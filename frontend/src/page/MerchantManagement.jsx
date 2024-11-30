@@ -3,16 +3,16 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
-  Filter,
-  CheckCircle,
-  XCircle,
   Users,
-  UserCheck,
-  UserX,
+  Eye,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
+import { Tabs, Tab, Box } from '@mui/material';
 import merchantService from "../services/merchantService"; // Import the merchant service
 import { toast } from "sonner"; // Assuming you're using sonner for notifications
 import { useNavigate } from "react-router-dom";
+import LoadingSpinner from "../component/UI/LoadingSpinner";
 
 const MerchantManagement = () => {
   // State Management
@@ -35,8 +35,20 @@ const MerchantManagement = () => {
   const navigate = useNavigate();
   // Modal States
   const [selectedMerchant, setSelectedMerchant] = useState(null);
-//   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+
+  // Add tab state
+  const [tabValue, setTabValue] = useState(0);
+
+  // Handle tab change
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    if (newValue === 0) {
+      fetchMerchants();
+    } else {
+      fetchPendingMerchants();
+    }
+  };
 
   // Fetch Merchants
   const fetchMerchants = async () => {
@@ -102,10 +114,10 @@ const MerchantManagement = () => {
     // Status Filter
     if (filterStatus !== "all") {
       result = result.filter((merchant) =>
-        filterStatus === "verified"
-          ? merchant.isVerify
-          : filterStatus === "pending"
-          ? !merchant.isVerify
+        filterStatus === "active"
+          ? merchant.isActive
+          : filterStatus === "blocked"
+          ? !merchant.isActive
           : true
       );
     }
@@ -136,167 +148,239 @@ const MerchantManagement = () => {
   useEffect(() => {
     fetchMerchants();
   }, []);
+
+  // Sorting handler
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction:
+        prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
   // Render Methods
-  const renderMerchantTable = () => (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <div className="flex justify-between items-center p-4 bg-gray-50">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search merchants..."
-              className="pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+  const renderMerchantTable = () => {
+    if (filteredMerchants.length === 0) {
+      return (
+        <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100">
+          <div className="flex justify-center items-center p-12">
+            <div className="text-center">
+              <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {tabValue === 1 ? "No Pending Verifications" : "No Merchants Found"}
+              </h3>
+              <p className="text-gray-500">
+                {tabValue === 1 
+                  ? "There are currently no merchants waiting for verification."
+                  : "No merchants match your search criteria."}
+              </p>
+            </div>
           </div>
-          <select
-            className="px-4 py-2 border rounded-md"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="all">All Merchants</option>
-            <option value="verified">Verified</option>
-            <option value="pending">Pending</option>
-          </select>
         </div>
-        <div className="flex items-center space-x-2 text-gray-600">
-          <Users size={20} />
-          <span>{filteredMerchants.length} Total Merchants</span>
-        </div>
-      </div>
+      );
+    }
 
-      <table className="w-full">
-        <thead className="bg-gray-100 border-b">
-          <tr>
-            {[
-              { key: "name", label: "Merchant Name" },
-              { key: "email", label: "Email" },
-              { key: "createdAt", label: "Joined Date" },
-              { key: "isVerify", label: "Status" },
-              { label: "Actions" },
-            ].map((column) => (
-              <th
-                key={column.key || "actions"}
-                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => column.key && handleSort(column.key)}
-              >
-                <div className="flex items-center">
-                  {column.label}
-                  {column.key && (
-                    <div className="ml-2">
-                      <ChevronUp
-                        size={16}
-                        className={`text-gray-400 ${
-                          sortConfig.key === column.key &&
-                          sortConfig.direction === "asc"
-                            ? "text-blue-600"
-                            : ""
-                        }`}
-                      />
-                      <ChevronDown
-                        size={16}
-                        className={`text-gray-400 ${
-                          sortConfig.key === column.key &&
-                          sortConfig.direction === "desc"
-                            ? "text-blue-600"
-                            : ""
-                        }`}
-                      />
-                    </div>
-                  )}
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {currentMerchants.map((merchant) => (
-            <tr
-              key={merchant._id}
-              className="hover:bg-gray-50 transition-colors"
+    return (
+      <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-100">
+        {/* Search and Filter Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search merchants..."
+                className="pl-10 pr-4 py-2.5 w-72 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+            </div>
+            <select
+              className="px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
             >
-              <td className="px-4 py-3">{merchant.name}</td>
-              <td className="px-4 py-3">{merchant.email}</td>
-              <td className="px-4 py-3">
-                {new Date(merchant.createdAt).toLocaleDateString()}
-              </td>
-              <td className="px-4 py-3">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    merchant.isVerify
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {merchant.isVerify ? "Verified" : "Pending"}
-                </span>
-              </td>
-              <td className="px-4 py-3 flex space-x-2">
-                <button
-                  className="text-blue-500 hover:text-blue-700"
-                  onClick={() => navigate(`/merchants/${merchant._id}`)}
-                >
-                  View Details
-                </button>
-                {/* {!merchant.isVerify && (
-                  <button
-                    className="text-green-500 hover:text-green-700"
-                    onClick={() => {
-                      setSelectedMerchant(merchant);
-                      setIsVerificationModalOpen(true);
-                    }}
-                  >
-                    Verify
-                  </button>
-                )} */}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Pagination */}
-      <div className="flex justify-between items-center p-4 bg-gray-50">
-        <div>
-          Showing {indexOfFirstMerchant + 1} to{" "}
-          {Math.min(indexOfLastMerchant, filteredMerchants.length)}
-          of {filteredMerchants.length} merchants
+              <option value="all">All Merchants</option>
+              <option value="active">Active Merchants</option>
+              <option value="blocked">Blocked Merchants</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2 text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
+            <Users size={18} />
+            <span className="font-medium">{filteredMerchants.length} Merchants</span>
+          </div>
         </div>
-        <div className="flex space-x-2">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => prev - 1)}
-            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <button
-            disabled={
-              currentPage ===
-              Math.ceil(filteredMerchants.length / merchantsPerPage)
-            }
-            onClick={() => setCurrentPage((prev) => prev + 1)}
-            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-          >
-            Next
-          </button>
+
+        {/* Table */}
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              {[
+                { key: "name", label: "Merchant Name" },
+                { key: "email", label: "Email" },
+                { key: "createdAt", label: "Joined Date" },
+                { key: "isVerify", label: "Verification" },
+                { key: "isActive", label: "Status" },
+                { label: "Actions" },
+              ].map((column) => (
+                <th
+                  key={column.key || "actions"}
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
+                  onClick={() => column.key && handleSort(column.key)}
+                >
+                  <div className="flex items-center gap-2">
+                    {column.label}
+                    {column.key && (
+                      <div className="flex flex-col">
+                        <ChevronUp
+                          size={14}
+                          className={`${
+                            sortConfig.key === column.key &&
+                            sortConfig.direction === "asc"
+                              ? "text-blue-600"
+                              : "text-gray-400"
+                          }`}
+                        />
+                        <ChevronDown
+                          size={14}
+                          className={`-mt-1 ${
+                            sortConfig.key === column.key &&
+                            sortConfig.direction === "desc"
+                              ? "text-blue-600"
+                              : "text-gray-400"
+                          }`}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {currentMerchants.map((merchant) => (
+              <tr
+                key={merchant._id}
+                className="hover:bg-gray-50 transition-colors"
+              >
+                <td className="px-6 py-4">
+                  <div className="font-medium text-gray-900">{merchant.name}</div>
+                </td>
+                <td className="px-6 py-4 text-gray-600">{merchant.email}</td>
+                <td className="px-6 py-4 text-gray-600">
+                  {new Date(merchant.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                      merchant.isVerify
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {merchant.isVerify ? (
+                      <CheckCircle2 size={14} />
+                    ) : (
+                      <AlertCircle size={14} />
+                    )}
+                    {merchant.isVerify ? "Verified" : "Pending"}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                      merchant.isActive
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {merchant.isActive ? (
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    ) : (
+                      <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                    )}
+                    {merchant.isActive ? "Active" : "Blocked"}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => navigate(`/merchants/${merchant._id}`)}
+                      className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700"
+                    >
+                      <Eye size={16} />
+                      View Details
+                    </button>
+                    {!merchant.isVerify && (
+                      <button
+                        onClick={() => {
+                          setSelectedMerchant(merchant);
+                          setIsVerificationModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 text-green-600 hover:text-green-700"
+                      >
+                        <CheckCircle2 size={16} />
+                        Verify
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Pagination */}
+        <div className="flex justify-between items-center px-6 py-4 bg-gray-50">
+          <div className="text-sm text-gray-600">
+            Showing {indexOfFirstMerchant + 1} to{" "}
+            {Math.min(indexOfLastMerchant, filteredMerchants.length)} of{" "}
+            {filteredMerchants.length} merchants
+          </div>
+          <div className="flex gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              disabled={
+                currentPage ===
+                Math.ceil(filteredMerchants.length / merchantsPerPage)
+              }
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderVerificationModal = () =>
     selectedMerchant && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-white rounded-lg shadow-xl p-6 w-96">
-          <h2 className="text-xl font-bold mb-4">Verify Merchant</h2>
-          <p>Are you sure you want to verify {selectedMerchant.name}?</p>
-          <div className="flex justify-end space-x-2 mt-4">
+      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-[480px] max-w-lg">
+          <div className="text-center mb-6">
+            <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Verify Merchant
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Are you sure you want to verify {selectedMerchant.name}? This action
+              cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
             <button
               onClick={() => setIsVerificationModalOpen(false)}
-              className="px-4 py-2 bg-gray-200 rounded"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -304,7 +388,7 @@ const MerchantManagement = () => {
               onClick={() =>
                 handleVerification(selectedMerchant._id, "approved")
               }
-              className="px-4 py-2 bg-green-500 text-white rounded"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
             >
               Confirm Verification
             </button>
@@ -313,50 +397,60 @@ const MerchantManagement = () => {
       </div>
     );
 
-  // Loading and Error States
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-blue-500"></div>
-      </div>
-    );
+  // Replace the header buttons with Material UI Tabs
+  const renderTabs = () => (
+    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Tabs 
+        value={tabValue} 
+        onChange={handleTabChange}
+        aria-label="merchant management tabs"
+        sx={{
+          '& .MuiTab-root': {
+            textTransform: 'none',
+            fontWeight: 'medium',
+          },
+          '& .Mui-selected': {
+            color: 'rgb(37, 99, 235) !important',
+          },
+          '& .MuiTabs-indicator': {
+            backgroundColor: 'rgb(37, 99, 235)',
+          },
+        }}
+      >
+        <Tab 
+          label="All Merchants" 
+          icon={<Users size={18} />}
+          iconPosition="start"
+        />
+        <Tab 
+          label="Pending Verifications" 
+          icon={<AlertCircle size={18} />}
+          iconPosition="start"
+        />
+      </Tabs>
+    </Box>
+  );
 
-  // Loading and Error States
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-blue-500"></div>
-      </div>
-    );
+  if (loading) return <LoadingSpinner />;
 
-  if (error)
-    return <div className="text-red-500 text-center mt-10">{error}</div>;
+  if (error) return (
+    <div className="flex justify-center items-center h-[50vh]">
+      <div className="text-red-500 bg-red-50 px-6 py-4 rounded-lg">
+        {error}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold flex items-center">
+    <div className="container mx-auto px-6 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">
           Merchant Management
         </h1>
-        <div className="flex space-x-2">
-          <button
-            onClick={fetchMerchants}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            All Merchants
-          </button>
-          <button
-            onClick={fetchPendingMerchants}
-            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-          >
-            Pending Verifications
-          </button>
-        </div>
       </div>
 
+      {renderTabs()}
       {renderMerchantTable()}
-
-      {/* {isDetailsModalOpen && renderDetailsModal()} */}
       {isVerificationModalOpen && renderVerificationModal()}
     </div>
   );

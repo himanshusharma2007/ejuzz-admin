@@ -2,9 +2,10 @@ import api from './api';
 
 const productServices = {
   // Get all products
-  getAllProducts: async () => {
+  getAllProducts: async (shopId) => {
     try {
-      const response = await api.get('/products');
+      console.log('shopId', shopId)
+      const response = await api.get(`/products/${shopId}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;

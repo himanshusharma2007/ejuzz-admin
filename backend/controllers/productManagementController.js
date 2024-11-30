@@ -10,26 +10,32 @@ exports.getAllProducts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const merchantId = req.params.merchantId;
+    const shopId = req.params.shopId;
 
-    if (!merchantId) {
+    if (!shopId) {
       return res.status(400).json({
         success: false,
         message: 'Merchant ID is required'
       });
     }
 
-    // Execute query with pagination
-    const products = await Product.find({merchantId})
-      .populate('merchantId', 'name email shopName')
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
+    const products = await Product.find({ shopId })
+    .populate({
+      path: 'shopId',
+      populate: {
+        path: 'merchantId',
+        select: 'name email', // Only include these fields from merchantId
+      },
+    })
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+  
 
     // Get total count for pagination
-    const totalProducts = await Product.countDocuments(filter);
+    const totalProducts = await Product.countDocuments(products);
 
-    console.log(`Retrieved ${products.length} products for merchant ${merchantId}`);
+   
     
     res.status(200).json({
       success: true,
@@ -109,10 +115,6 @@ exports.getAllShopProduct = async (req, res) => {
     });
   }
 };
-
-// @desc    Remove product
-// @route   DELETE /api/admin/products/:id
-// @access  Private (Admin only)
 exports.removeProduct = async (req, res) => {
   console.log('Executing removeProduct controller');
   try {

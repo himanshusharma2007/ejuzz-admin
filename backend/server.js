@@ -29,7 +29,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/merchants", merchantRoutes);
 app.use("/api/customers", customersRoutes);
-app.use("/api/shop", shopRoutes);
+app.use("/api/shops", shopRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 
