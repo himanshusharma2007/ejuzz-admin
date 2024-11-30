@@ -8,7 +8,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
-import { Tabs, Tab, Box } from '@mui/material';
+import { Tabs, Tab, Box } from "@mui/material";
 import merchantService from "../services/merchantService"; // Import the merchant service
 import { toast } from "sonner"; // Assuming you're using sonner for notifications
 import { useNavigate } from "react-router-dom";
@@ -153,8 +153,7 @@ const MerchantManagement = () => {
   const handleSort = (key) => {
     setSortConfig((prev) => ({
       key,
-      direction:
-        prev.key === key && prev.direction === "asc" ? "desc" : "asc",
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
@@ -167,10 +166,12 @@ const MerchantManagement = () => {
             <div className="text-center">
               <AlertCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {tabValue === 1 ? "No Pending Verifications" : "No Merchants Found"}
+                {tabValue === 1
+                  ? "No Pending Verifications"
+                  : "No Merchants Found"}
               </h3>
               <p className="text-gray-500">
-                {tabValue === 1 
+                {tabValue === 1
                   ? "There are currently no merchants waiting for verification."
                   : "No merchants match your search criteria."}
               </p>
@@ -193,7 +194,10 @@ const MerchantManagement = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+              <Search
+                className="absolute left-3 top-3 text-gray-400"
+                size={18}
+              />
             </div>
             <select
               className="px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 cursor-pointer"
@@ -207,7 +211,9 @@ const MerchantManagement = () => {
           </div>
           <div className="flex items-center gap-2 text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
             <Users size={18} />
-            <span className="font-medium">{filteredMerchants.length} Merchants</span>
+            <span className="font-medium">
+              {filteredMerchants.length} Merchants
+            </span>
           </div>
         </div>
 
@@ -264,7 +270,9 @@ const MerchantManagement = () => {
                 className="hover:bg-gray-50 transition-colors"
               >
                 <td className="px-6 py-4">
-                  <div className="font-medium text-gray-900">{merchant.name}</div>
+                  <div className="font-medium text-gray-900">
+                    {merchant.name}
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-gray-600">{merchant.email}</td>
                 <td className="px-6 py-4 text-gray-600">
@@ -373,8 +381,8 @@ const MerchantManagement = () => {
               Verify Merchant
             </h2>
             <p className="mt-2 text-gray-600">
-              Are you sure you want to verify {selectedMerchant.name}? This action
-              cannot be undone.
+              Are you sure you want to verify {selectedMerchant.name}? This
+              action cannot be undone.
             </p>
           </div>
           <div className="flex justify-end gap-3">
@@ -399,31 +407,31 @@ const MerchantManagement = () => {
 
   // Replace the header buttons with Material UI Tabs
   const renderTabs = () => (
-    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-      <Tabs 
-        value={tabValue} 
+    <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+      <Tabs
+        value={tabValue}
         onChange={handleTabChange}
         aria-label="merchant management tabs"
         sx={{
-          '& .MuiTab-root': {
-            textTransform: 'none',
-            fontWeight: 'medium',
+          "& .MuiTab-root": {
+            textTransform: "none",
+            fontWeight: "medium",
           },
-          '& .Mui-selected': {
-            color: 'rgb(37, 99, 235) !important',
+          "& .Mui-selected": {
+            color: "rgb(37, 99, 235) !important",
           },
-          '& .MuiTabs-indicator': {
-            backgroundColor: 'rgb(37, 99, 235)',
+          "& .MuiTabs-indicator": {
+            backgroundColor: "rgb(37, 99, 235)",
           },
         }}
       >
-        <Tab 
-          label="All Merchants" 
+        <Tab
+          label="All Merchants"
           icon={<Users size={18} />}
           iconPosition="start"
         />
-        <Tab 
-          label="Pending Verifications" 
+        <Tab
+          label="Pending Verifications"
           icon={<AlertCircle size={18} />}
           iconPosition="start"
         />
@@ -431,15 +439,14 @@ const MerchantManagement = () => {
     </Box>
   );
 
-  if (loading) return <LoadingSpinner />;
-
-  if (error) return (
-    <div className="flex justify-center items-center h-[50vh]">
-      <div className="text-red-500 bg-red-50 px-6 py-4 rounded-lg">
-        {error}
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <div className="text-red-500 bg-red-50 px-6 py-4 rounded-lg">
+          {error}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -450,7 +457,7 @@ const MerchantManagement = () => {
       </div>
 
       {renderTabs()}
-      {renderMerchantTable()}
+      {loading ? <LoadingSpinner /> : renderMerchantTable()}
       {isVerificationModalOpen && renderVerificationModal()}
     </div>
   );
