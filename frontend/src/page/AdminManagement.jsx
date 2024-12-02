@@ -10,6 +10,8 @@ import {
     Filter, 
     X 
 } from 'lucide-react';
+import LoadingSpinner from '../component/UI/LoadingSpinner';
+import { useToast } from '../context/ToastContext';
 
 // Permissions from the admin model
 const ALL_PERMISSIONS = [
@@ -29,6 +31,7 @@ const AdminManagementPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
     const [selectedPermissionsFilter, setSelectedPermissionsFilter] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
     
     // Modal States
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -36,9 +39,7 @@ const AdminManagementPage = () => {
     const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
     const [currentAdmin, setCurrentAdmin] = useState(null);
 
-    // Error and Notification States
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const showToast = useToast();
 
     // Form State
     const [createForm, setCreateForm] = useState({
@@ -51,16 +52,17 @@ const AdminManagementPage = () => {
 
     // Fetch Admins with Error Handling
     const fetchAdmins = useCallback(async () => {
+        setIsLoading(true);
         try {
             const response = await adminService.getAllAdmins();
-            console.log('response', response)
             setAdmins(response.data);
-            setError(null);
         } catch (error) {
-            setError('Failed to fetch admin list. Please try again.');
+            showToast('Failed to fetch admin list. Please try again.', 'error');
             console.error('Failed to fetch admins', error);
+        } finally {
+            setIsLoading(false);
         }
-    }, []);
+    }, [showToast]);
    
 
     useEffect(() => {
@@ -124,15 +126,18 @@ const AdminManagementPage = () => {
     // Admin Actions
     const handleCreateAdmin = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
         try {
             await adminService.createAdmin(createForm);
             await fetchAdmins();
             resetCreateForm();
             setIsCreateModalOpen(false);
-            setSuccess('Admin created successfully');
+            showToast('Admin created successfully', 'success');
         } catch (error) {
-            setError('Failed to create admin. Please check your inputs.');
+            showToast('Failed to create admin. Please check your inputs.', 'error');
             console.error('Failed to create admin', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -142,9 +147,9 @@ const AdminManagementPage = () => {
             await adminService.updateAdmin(currentAdmin._id, createForm);
             await fetchAdmins();
             setIsEditModalOpen(false);
-            setSuccess('Admin updated successfully');
+            showToast('Admin updated successfully', 'success');
         } catch (error) {
-            setError('Failed to update admin. Please check your inputs.');
+            showToast('Failed to update admin. Please check your inputs.', 'error');
             console.error('Failed to update admin', error);
         }
     };
@@ -153,9 +158,9 @@ const AdminManagementPage = () => {
         try {
             await adminService.deleteAdmin(adminId);
             await fetchAdmins();
-            setSuccess('Admin deleted successfully');
+            showToast('Admin deleted successfully', 'success');
         } catch (error) {
-            setError('Failed to delete admin. Please try again.');
+            showToast('Failed to delete admin. Please try again.', 'error');
             console.error('Failed to delete admin', error);
         }
     };
@@ -168,42 +173,11 @@ const AdminManagementPage = () => {
             });
             await fetchAdmins();
             setIsPermissionModalOpen(false);
-            setSuccess('Permissions updated successfully');
+            showToast('Permissions updated successfully', 'success');
         } catch (error) {
-            setError('Failed to update permissions. Please try again.');
+            showToast('Failed to update permissions. Please try again.', 'error');
             console.error('Failed to update admin permissions', error);
         }
-    };
-
-    // Render Error/Success Notifications
-    const renderNotification = () => {
-        if (error) {
-            return (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <span className="block sm:inline">{error}</span>
-                    <span 
-                        className="absolute top-0 bottom-0 right-0 px-4 py-3" 
-                        onClick={() => setError(null)}
-                    >
-                        <X size={20} />
-                    </span>
-                </div>
-            );
-        }
-        if (success) {
-            return (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <span className="block sm:inline">{success}</span>
-                    <span 
-                        className="absolute top-0 bottom-0 right-0 px-4 py-3" 
-                        onClick={() => setSuccess(null)}
-                    >
-                        <X size={20} />
-                    </span>
-                </div>
-            );
-        }
-        return null;
     };
 
     // Add this helper function near the top of the component
@@ -304,10 +278,17 @@ const AdminManagementPage = () => {
                         </button>
                         <button 
                             type="submit"
+                            disabled={isLoading}
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
                         >
-                            <Plus size={20} className="mr-2" />
-                            Create Admin
+                            {isLoading ? (
+                                <LoadingSpinner size="small" text="" />
+                            ) : (
+                                <>
+                                    <Plus size={20} className="mr-2" />
+                                    Create Admin
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>
@@ -427,106 +408,112 @@ const AdminManagementPage = () => {
                 </div>
             </div>
             <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead>
-                        <tr className="bg-gray-50">
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">
-                                <button 
-                                    className="flex items-center space-x-1 hover:text-gray-900"
-                                    onClick={() => setSortConfig({
-                                        key: 'name',
-                                        direction: sortConfig.direction === 'asc' ? 'desc' : 'asc'
-                                    })}
-                                >
-                                    <span>Name</span>
-                                    {sortConfig.key === 'name' && (
-                                        sortConfig.direction === 'asc' ? 
-                                        <ChevronUp size={16} /> : 
-                                        <ChevronDown size={16} />
-                                    )}
-                                </button>
-                            </th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Email</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Role</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Permissions</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                        {filteredAdmins.map(admin => (
-                            <tr key={admin._id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="font-medium text-gray-900">{admin.name}</div>
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">{admin.email}</td>
-                                <td className="px-6 py-4">
-                                    <span className="text-nowrap inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        {admin.role}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {admin.permissions.map(perm => (
-                                            <span 
-                                                key={perm}
-                                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-                                            >
-                                                {perm.split('_').map(word => 
-                                                    word.charAt(0).toUpperCase() + word.slice(1)
-                                                ).join(' ')}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex space-x-2">
-                                        <button 
-                                            onClick={() => {
-                                                setCurrentAdmin(admin);
-                                                setCreateForm({
-                                                    name: admin.name,
-                                                    email: admin.email,
-                                                    role: admin.role || 'Moderator',
-                                                    permissions: admin.permissions || []
-                                                });
-                                                setIsEditModalOpen(true);
-                                            }}
-                                            className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                                            title="Edit Admin"
-                                        >
-                                            <Edit size={18} />
-                                        </button>
-                                        <button 
-                                            onClick={() => {
-                                                setCurrentAdmin(admin);
-                                                setCreateForm({
-                                                    ...admin,
-                                                    permissions: admin.permissions || []
-                                                });
-                                                setIsPermissionModalOpen(true);
-                                            }}
-                                            className="p-1.5 hover:bg-green-50 text-green-600 rounded-lg transition-colors"
-                                            title="Manage Permissions"
-                                        >
-                                            <Filter size={18} />
-                                        </button>
-                                        <button 
-                                            onClick={() => {
-                                                if(window.confirm(`Are you sure you want to delete admin ${admin.name}?`)) {
-                                                    handleDeleteAdmin(admin._id);
-                                                }
-                                            }}
-                                            className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                                            title="Delete Admin"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </td>
+                {isLoading ? (
+                    <div className="py-8">
+                        <LoadingSpinner text="Loading admins..." />
+                    </div>
+                ) : (
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-gray-50">
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">
+                                    <button 
+                                        className="flex items-center space-x-1 hover:text-gray-900"
+                                        onClick={() => setSortConfig({
+                                            key: 'name',
+                                            direction: sortConfig.direction === 'asc' ? 'desc' : 'asc'
+                                        })}
+                                    >
+                                        <span>Name</span>
+                                        {sortConfig.key === 'name' && (
+                                            sortConfig.direction === 'asc' ? 
+                                            <ChevronUp size={16} /> : 
+                                            <ChevronDown size={16} />
+                                        )}
+                                    </button>
+                                </th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Email</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Role</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Permissions</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {filteredAdmins.map(admin => (
+                                <tr key={admin._id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="font-medium text-gray-900">{admin.name}</div>
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-600">{admin.email}</td>
+                                    <td className="px-6 py-4">
+                                        <span className="text-nowrap inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {admin.role}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {admin.permissions.map(perm => (
+                                                <span 
+                                                    key={perm}
+                                                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                                                >
+                                                    {perm.split('_').map(word => 
+                                                        word.charAt(0).toUpperCase() + word.slice(1)
+                                                    ).join(' ')}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex space-x-2">
+                                            <button 
+                                                onClick={() => {
+                                                    setCurrentAdmin(admin);
+                                                    setCreateForm({
+                                                        name: admin.name,
+                                                        email: admin.email,
+                                                        role: admin.role || 'Moderator',
+                                                        permissions: admin.permissions || []
+                                                    });
+                                                    setIsEditModalOpen(true);
+                                                }}
+                                                className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                                                title="Edit Admin"
+                                            >
+                                                <Edit size={18} />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setCurrentAdmin(admin);
+                                                    setCreateForm({
+                                                        ...admin,
+                                                        permissions: admin.permissions || []
+                                                    });
+                                                    setIsPermissionModalOpen(true);
+                                                }}
+                                                className="p-1.5 hover:bg-green-50 text-green-600 rounded-lg transition-colors"
+                                                title="Manage Permissions"
+                                            >
+                                                <Filter size={18} />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    if(window.confirm(`Are you sure you want to delete admin ${admin.name}?`)) {
+                                                        handleDeleteAdmin(admin._id);
+                                                    }
+                                                }}
+                                                className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                                                title="Delete Admin"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );
@@ -534,8 +521,6 @@ const AdminManagementPage = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">Admin Management</h1>
-            
-            {renderNotification()}
             
             {renderAdminList()}
             

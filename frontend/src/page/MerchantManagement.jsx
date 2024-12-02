@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Tabs, Tab, Box } from "@mui/material";
 import merchantService from "../services/merchantService"; // Import the merchant service
-import { toast } from "sonner"; // Assuming you're using sonner for notifications
+import { useToast } from "../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../component/UI/LoadingSpinner";
 
@@ -20,6 +20,8 @@ const MerchantManagement = () => {
   const [filteredMerchants, setFilteredMerchants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const showToast = useToast();
 
   // Filtering and Sorting States
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,10 +34,6 @@ const MerchantManagement = () => {
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [merchantsPerPage] = useState(10);
-  const navigate = useNavigate();
-  // Modal States
-  const [selectedMerchant, setSelectedMerchant] = useState(null);
-  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
 
   // Add tab state
   const [tabValue, setTabValue] = useState(0);
@@ -59,9 +57,7 @@ const MerchantManagement = () => {
       setFilteredMerchants(response.data);
     } catch (err) {
       setError("Failed to fetch merchants");
-      toast.error("Failed to fetch merchants", {
-        description: err.message,
-      });
+      showToast(`Failed to fetch merchants: ${err.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -76,28 +72,11 @@ const MerchantManagement = () => {
       setFilteredMerchants(response.data);
     } catch (err) {
       setError("Failed to fetch pending merchants");
-      toast.error("Failed to fetch pending merchants", {
-        description: err.message,
-      });
+      showToast(`Failed to fetch pending merchants: ${err.message}`, "error");
     } finally {
       setLoading(false);
     }
   };
-
-  // Verification Handler
-  const handleVerification = async (merchantId, status) => {
-    try {
-      await merchantService.verifyMerchant(merchantId, { status });
-      toast.success(`Merchant ${status} successfully`);
-      fetchMerchants();
-      setIsVerificationModalOpen(false);
-    } catch (err) {
-      toast.error("Verification failed", {
-        description: err.message,
-      });
-    }
-  };
-
   // Advanced Filtering Effect
   useEffect(() => {
     let result = merchants;
@@ -319,18 +298,7 @@ const MerchantManagement = () => {
                       <Eye size={16} />
                       View Details
                     </button>
-                    {!merchant.isVerify && (
-                      <button
-                        onClick={() => {
-                          setSelectedMerchant(merchant);
-                          setIsVerificationModalOpen(true);
-                        }}
-                        className="inline-flex items-center gap-1.5 text-green-600 hover:text-green-700"
-                      >
-                        <CheckCircle2 size={16} />
-                        Verify
-                      </button>
-                    )}
+                   
                   </div>
                 </td>
               </tr>
@@ -369,41 +337,6 @@ const MerchantManagement = () => {
     );
   };
 
-  const renderVerificationModal = () =>
-    selectedMerchant && (
-      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-        <div className="bg-white rounded-xl shadow-xl p-6 w-[480px] max-w-lg">
-          <div className="text-center mb-6">
-            <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <AlertCircle className="w-6 h-6 text-blue-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Verify Merchant
-            </h2>
-            <p className="mt-2 text-gray-600">
-              Are you sure you want to verify {selectedMerchant.name}? This
-              action cannot be undone.
-            </p>
-          </div>
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setIsVerificationModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() =>
-                handleVerification(selectedMerchant._id, "approved")
-              }
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              Confirm Verification
-            </button>
-          </div>
-        </div>
-      </div>
-    );
 
   // Replace the header buttons with Material UI Tabs
   const renderTabs = () => (
@@ -458,7 +391,7 @@ const MerchantManagement = () => {
 
       {renderTabs()}
       {loading ? <LoadingSpinner /> : renderMerchantTable()}
-      {isVerificationModalOpen && renderVerificationModal()}
+    
     </div>
   );
 };

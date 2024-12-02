@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import merchantService from "../services/merchantService";
-import { toast } from "sonner";
+import { useToast } from "../context/ToastContext";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { BanIcon, Download } from "lucide-react";
@@ -15,6 +15,8 @@ import {
   FileText,
   CheckCircle,
   XCircle,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { X, ZoomIn } from "lucide-react";
 
@@ -72,9 +74,7 @@ const PDFExportButton = ({ targetRef }) => {
       pdf.save(`Merchant_Details_Export.pdf`);
     } catch (error) {
       console.error("PDF Export Error:", error);
-      toast.error("Failed to export PDF", {
-        description: "Please try again later.",
-      });
+      showToast("Failed to export PDF. Please try again later.", "error");
     }
   };
   return (
@@ -96,7 +96,9 @@ const MerchantDetails = () => {
   const navigate = useNavigate();
   const mainContainerRef = useRef(null);
   const [verifying, setVerifying] = useState(false);
-
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [selectedMerchant, setSelectedMerchant] = useState(null);
+  const showToast = useToast();
   const ImageViewer = ({ src, alt, label }) => (
     <div
       className="flex flex-col items-center cursor-pointer group relative"
@@ -127,9 +129,7 @@ const MerchantDetails = () => {
       setMerchantDetails(response.data);
     } catch (err) {
       setError("Failed to fetch merchant details");
-      toast.error("Failed to fetch merchant details", {
-        description: err.message,
-      });
+      showToast(`Failed to fetch merchant details: ${err.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -140,29 +140,61 @@ const MerchantDetails = () => {
     setVerifying(true);
     try {
       await merchantService.verifyMerchant(merchantId, { status });
-      toast.success(`Merchant ${status} successfully`);
+      showToast(`Merchant ${status} successfully`, "success");
       fetchMerchantDetails(); // Refresh details after verification
     } catch (err) {
-      toast.error("Verification failed", {
-        description: err.message,
-      });
+      showToast(`Verification failed: ${err.message}`, "error");
     } finally {
       setVerifying(false);
     }
   };
+  const renderVerificationModal = () =>
+    selectedMerchant && (
+      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-6 w-[480px] max-w-lg">
+          <div className="text-center mb-6">
+            <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Verify Merchant
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Are you sure you want to verify {selectedMerchant.name}? This
+              action cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setIsVerificationModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() =>
+                handleVerification(selectedMerchant._id, "approved")
+              }
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+            >
+              {verifying ? "Comfirming..." : "Confirm Verification"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
 
   // Status Change Handler
   const handleStatusChange = async (active) => {
     try {
       await merchantService.updateMerchantStatus(merchantId, { active });
-      toast.success(
-        `Merchant ${active ? "activated" : "suspended"} successfully`
+      showToast(
+        `Merchant ${active ? "activated" : "suspended"} successfully`,
+        "success"
       );
       fetchMerchantDetails(); // Refresh details after status change
     } catch (err) {
-      toast.error("Failed to update merchant status", {
-        description: err.message,
-      });
+      showToast(`Failed to update merchant status: ${err.message}`, "error");
     }
   };
 
@@ -205,28 +237,29 @@ const MerchantDetails = () => {
           <div className="flex ">
             {!merchant.isVerify ? (
               <button
-                onClick={() => handleVerification("approved")}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
-                disabled={verifying}
+                onClick={() => {
+                  setSelectedMerchant(merchant);
+                  setIsVerificationModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 text-green-600 hover:text-green-700"
               >
-                {verifying ? "Verifying..." : <UserCheck className="mr-2" />} Verify Merchant
+                <CheckCircle2 size={16} />
+                Verify
+              </button>
+            ) : merchant.isActive ? (
+              <button
+                onClick={() => handleStatusChange(false)}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
+              >
+                <UserCheck className="mr-2" /> Block Merchant
               </button>
             ) : (
-              merchant.isActive ? (
-                <button
-                  onClick={() => handleStatusChange(false)}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
-                >
-                  <UserCheck className="mr-2" /> Block Merchant
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleStatusChange(true)}
-                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
-                >
-                  <UserCheck className="mr-2" /> Activate Merchant
-                </button>
-              )
+              <button
+                onClick={() => handleStatusChange(true)}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
+              >
+                <UserCheck className="mr-2" /> Activate Merchant
+              </button>
             )}
           </div>
         </div>
@@ -279,10 +312,9 @@ const MerchantDetails = () => {
               />
               {!merchant.isActive && (
                 <div className="absolute  top-2 right-2 flex space-x-2 items-center justify-center">
-                  <BanIcon  className="text-red-600"/>
-                  <p className="text-red-600 font-bold text-xl">  Blocked</p>
+                  <BanIcon className="text-red-600" />
+                  <p className="text-red-600 font-bold text-xl"> Blocked</p>
                 </div>
-                
               )}
               <div className="mt-4 flex items-center">
                 {merchant.isVerify ? (
@@ -330,25 +362,23 @@ const MerchantDetails = () => {
             <div className="">
               <p className="font-medium mb-2">Shop Contact Details</p>
               <div className="flex space-x-2">
-
-              <p className="font-bold ">Shop Address:</p>
-              <p> {shop.address.postalCode}</p>
-              <p>{shop.address.street}</p>
-              <p>
-                {shop.address.city}, {shop.address.country}
-              </p>
+                <p className="font-bold ">Shop Address:</p>
+                <p> {shop.address.postalCode}</p>
+                <p>{shop.address.street}</p>
+                <p>
+                  {shop.address.city}, {shop.address.country}
+                </p>
               </div>
               <div>
-              {" "}
-              <p>
-                <strong>Contact:</strong> {shop.contact.phoneNo}
-              </p>
-              <p>
-                <strong>Contact Email:</strong> {shop.contact.email}
-              </p>
+                {" "}
+                <p>
+                  <strong>Contact:</strong> {shop.contact.phoneNo}
+                </p>
+                <p>
+                  <strong>Contact Email:</strong> {shop.contact.email}
+                </p>
+              </div>
             </div>
-            </div>
-            
           </div>
         </div>
 
@@ -430,6 +460,7 @@ const MerchantDetails = () => {
       </div>
       {/* Existing buttons */}
       <PDFExportButton targetRef={mainContainerRef} />
+      {isVerificationModalOpen && renderVerificationModal()}
     </div>
   );
 };
