@@ -27,7 +27,7 @@ import { useToast } from "../context/ToastContext";
 const ImageModal = ({ src, alt, onClose }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="relative max-w-[90%] max-h-[90%] w-auto h-auto">
+            <div className="relative top-2 max-w-[90%] max-h-[90%] w-auto h-auto">
                 <button
                     onClick={onClose}
                     className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
@@ -104,9 +104,6 @@ const CustomerDetails = () => {
     const mainContainerRef = useRef(null);
     const [activeTab, setActiveTab] = useState('orders');
 
-
-    console.log(orders)
-
     // Fetch customer details
     const fetchCustomerDetails = async () => {
         try {
@@ -127,8 +124,8 @@ const CustomerDetails = () => {
     // Handle verification status change
     const handleVerification = async () => {
         try {
-            // await customerService.verifyCustomer(customerId, !customerDetails.isVerified);
-            // showToast(`Customer ${customerDetails.isVerified ? 'unverified' : 'verified'} successfully`, "success");
+            await customerService.customerVerification(customerId);
+            showToast(`Customer ${customerDetails.isVerified ? 'unverified' : 'verified'} successfully`, "success");
             fetchCustomerDetails();
             setIsVerificationModalOpen(false);
         } catch (err) {
@@ -221,49 +218,54 @@ const CustomerDetails = () => {
                                 <UserCheck className="mr-3 text-blue-500" />
                                 <div>
                                     <p className="font-medium">Name</p>
-                                    <p>{customerDetails.name}</p>
+                                    <p>{customerDetails.name || "N/A"}</p>
                                 </div>
                             </div>
                             <div className="flex items-center mb-4">
                                 <Mail className="mr-3 text-blue-500" />
                                 <div>
                                     <p className="font-medium">Email</p>
-                                    <p>{customerDetails.email}</p>
+                                    <p>{customerDetails.email || "N/A"}</p>
                                 </div>
                             </div>
                             <div className="flex items-center mb-4">
                                 <Phone className="mr-3 text-blue-500" />
                                 <div>
                                     <p className="font-medium">Phone Number</p>
-                                    <p>{customerDetails.phoneNumber}</p>
+                                    <p>{customerDetails.phoneNumber || "N/A"}</p>
                                 </div>
                             </div>
                             <div className="flex items-center mb-4">
                                 <MapPin className="mr-3 text-blue-500" />
                                 <div>
                                     <p className="font-medium">Address</p>
-                                    <p>
-                                        {customerDetails?.address?.street}, {customerDetails?.address?.city}
-                                        <br />
-                                        {customerDetails?.address?.postalCode}, {customerDetails.address?.country}
-                                    </p>
+
+                                    {
+                                        (customerDetails.address?.street) ? (
+                                            <p>
+                                                {customerDetails?.address?.street}, {customerDetails?.address?.city}
+                                                <br />
+                                                {customerDetails?.address?.postalCode}, {customerDetails.address?.country}
+                                            </p>
+                                        ) : "N/A"
+                                    }
                                 </div>
                             </div>
                             <div className="flex items-center mb-4">
                                 <Wallet className="mr-3 text-blue-500" />
                                 <div>
                                     <p className="font-medium">Wallet Balance</p>
-                                    <p>${customerDetails?.walletBalance?.toFixed(2)}</p>
+                                    <p>R{customerDetails?.walletBalance?.toFixed(2)}</p>
                                 </div>
                             </div>
                         </div>
                         <div className="relative flex flex-col items-center">
                             <img
-                                src={customerDetails?.profile?.url}
+                                src={customerDetails?.profile?.url || "https://via.placeholder.com/150"}
                                 alt="Customer Profile"
                                 className="w-64 h-64 object-cover rounded-full shadow-lg cursor-pointer"
                                 onClick={() => setSelectedImage({
-                                    src: customerDetails?.profile?.url,
+                                    src: customerDetails.profile.url || "https://via.placeholder.com/150",
                                     alt: "Customer Profile"
                                 })}
                             />
@@ -293,8 +295,8 @@ const CustomerDetails = () => {
                     <div className="flex border-b mb-4">
                         <button
                             className={`px-4 py-2 ${activeTab === 'orders'
-                                    ? 'border-b-2 border-blue-500 text-blue-500'
-                                    : 'text-gray-500'
+                                ? 'border-b-2 border-blue-500 text-blue-500'
+                                : 'text-gray-500'
                                 }`}
                             onClick={() => setActiveTab('orders')}
                         >
@@ -303,8 +305,8 @@ const CustomerDetails = () => {
                         </button>
                         <button
                             className={`px-4 py-2 ${activeTab === 'transactions'
-                                    ? 'border-b-2 border-blue-500 text-blue-500'
-                                    : 'text-gray-500'
+                                ? 'border-b-2 border-blue-500 text-blue-500'
+                                : 'text-gray-500'
                                 }`}
                             onClick={() => setActiveTab('transactions')}
                         >

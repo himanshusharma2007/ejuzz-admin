@@ -207,8 +207,10 @@ const CustomerManagement = () => {
                                                 { key: "name", label: "Customer Name" },
                                                 { key: "email", label: "Email" },
                                                 { key: "phoneNumber", label: "Phone" },
+                                                { key: "order", label: "Orders Count" },
                                                 { key: "createdAt", label: "Joined Date" },
                                                 { key: "isVerified", label: "Verification" },
+                                                { key: "isActive", label: "Active" },
                                                 { key: "walletBalance", label: "Wallet Balance" },
                                                 { label: "Actions" },
                                             ].map((column) => (
@@ -257,6 +259,7 @@ const CustomerManagement = () => {
                                                 </td>
                                                 <td className="px-6 py-4 text-gray-600">{customer.email || "N/A"}</td>
                                                 <td className="px-6 py-4 text-gray-600">{customer.phoneNumber}</td>
+                                                <td className="px-6 py-4 text-gray-600">{customer?.orderHistory?.length}</td>
                                                 <td className="px-6 py-4 text-gray-600">
                                                     {new Date(customer.createdAt).toLocaleDateString()}
                                                 </td>
@@ -273,6 +276,21 @@ const CustomerManagement = () => {
                                                             <AlertCircle size={14} />
                                                         )}
                                                         {customer.isVerified ? "Verified" : "Pending"}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${customer.accountStatus.isActive
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-yellow-100 text-yellow-700"
+                                                            }`}
+                                                    >
+                                                        {customer.accountStatus.isActive ? (
+                                                            <CheckCircle2 size={14} />
+                                                        ) : (
+                                                            <AlertCircle size={14} />
+                                                        )}
+                                                        {customer.accountStatus.isActive ? 'Active' : 'Suspended'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">

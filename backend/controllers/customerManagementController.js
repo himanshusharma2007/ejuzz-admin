@@ -55,12 +55,10 @@ exports.getAllCustomers = async (req, res) => {
 // Get single customer details with transaction history
 exports.getCustomerDetails = async (req, res) => {
   try {
-    console.log('Fetching customer details for ID:', req.params.id);
 
     const customer = await Customer.findById(req.params.id).select('-password');
 
     if (!customer) {
-      console.log('Customer not found');
       return res.status(404).json({
         success: false,
         error: 'Customer not found'
@@ -72,7 +70,6 @@ exports.getCustomerDetails = async (req, res) => {
       .populate('products.productId')
       .populate('merchantId', 'name email');
 
-    console.log(`Found ${orders.length} orders for customer`);
 
     res.status(200).json({
       success: true,
@@ -101,14 +98,57 @@ exports.updateCustomerStatus = async (req, res) => {
     const customer = await Customer.findByIdAndUpdate(
       req.params.id,
       {
-        isActive: req.body.active,
         $push: {
-          statusHistory: {
-            status: req.body.active ? 'activated' : 'suspended',
-            updatedBy: req.admin._id,
-            reason: req.body.reason || 'Status update by admin'
+          accountStatus: {
+            isActive: req.body.active,
+            deactivatedAt: Date.now(),
+            reasonForDeactivation: req.body.reason || 'Status update by admin'
           }
         }
+      },
+      { new: true }
+    ).select('-password');
+
+    if (!customer) {
+      console.log('Customer not found');
+      return res.status(404).json({
+        success: false,
+        error: 'Customer not found'
+      });
+    }
+
+    console.log(customer)
+
+    // Log the action in admin's activity
+    await Admin.findByIdAndUpdate(req.admin._id, {
+      $push: {
+        notifications: {
+          message: `Customer ${customer.name} (${customer.email}) ${req.body.active ? 'activated' : 'suspended'}`,
+          date: new Date()
+        }
+      }
+    });
+
+    console.log('Customer status updated successfully');
+    res.status(200).json({
+      success: true,
+      data: customer
+    });
+  } catch (error) {
+    console.error('Error in updateCustomerStatus:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error updating customer status'
+    });
+  }
+};
+
+exports.verifyCustomer = async (req, res) => {
+  try {
+    const customer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      {
+        isVerified: true
       },
       { new: true, runValidators: true }
     ).select('-password');
@@ -125,13 +165,13 @@ exports.updateCustomerStatus = async (req, res) => {
     await Admin.findByIdAndUpdate(req.admin._id, {
       $push: {
         notifications: {
-          message: `Customer ${customer.name} (${customer.email}) ${req.body.active ? 'activated' : 'suspended'}`,
+          message: `Customer ${customer.name} (${customer.email}) verify'}`,
           date: new Date()
         }
       }
     });
 
-    console.log('Customer status updated successfully');
+    console.log('Customer verification successfully');
     res.status(200).json({
       success: true,
       data: customer
@@ -158,20 +198,24 @@ exports.getCustomerTransactions = async (req, res) => {
       });
     }
 
-    // Get all orders (which represent transactions) for this customer
-    const transactions = await Order.find({
-      customerId: req.params.id,
-      status: 'Completed' // Only include completed transactions
-    })
-      .select('totalAmount createdAt status')
-      .sort({ createdAt: -1 });
+    const filter = {};
 
-    console.log(`Found ${transactions.length} transactions for customer`);
+    if (customer._id) {
+      filter.$or = [
+        { from: customer._id },
+        { to: customer._id},
+      ];
+    }
+
+    const transactions = await WalletTransaction.find(filter)
+      .populate("from", "name email paymentId")
+      .populate("to", "name email paymentId")
+      .sort({ createdAt: -1 }); // Sort by latest transactions
+
 
     res.status(200).json({
       success: true,
       data: {
-        currentBalance: customer.walletBalance,
         transactions
       }
     });
@@ -250,18 +294,14 @@ exports.updateWalletBalance = async (req, res) => {
 // Middleware to check customer management permissions
 exports.checkCustomerManagementPermission = async (req, res, next) => {
   try {
-    console.log('Checking customer management permission for admin:', req.admin);
 
     const admin = await Admin.findById(req.admin._id);
     if (!admin.permissions.includes('manage_customers')) {
-      console.log('Permission denied: manage_customers permission required');
       return res.status(403).json({
         success: false,
         error: 'You do not have permission to manage customers'
       });
     }
-
-    console.log('Customer management permission verified');
     next();
   } catch (error) {
     console.error('Error in checkCustomerManagementPermission:', error);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowUpRight, ArrowDownRight, RefreshCw, Clock } from 'lucide-react';
+import customerService from '../../services/customerService';
 
 const TransactionList = ({ customerId }) => {
   const [transactions, setTransactions] = useState([]);
@@ -12,8 +13,9 @@ const TransactionList = ({ customerId }) => {
       try {
         setLoading(true);
         // Replace with your actual service call
-        const response = await walletService.getCustomerTransactions(customerId);
-        setTransactions(response.data);
+        const response = await customerService.getCustomerTransactions(customerId);
+        console.log(response)
+        setTransactions(response.data.transactions);
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
       } finally {
@@ -24,10 +26,12 @@ const TransactionList = ({ customerId }) => {
     fetchTransactions();
   }, [customerId]);
 
+  console.log(transactions)
+
   // Get current transactions
   const indexOfLastTransaction = currentPage * transactionsPerPage;
   const indexOfFirstTransaction = indexOfLastTransaction - transactionsPerPage;
-  const currentTransactions = transactions.slice(
+  const currentTransactions = transactions?.slice(
     indexOfFirstTransaction,
     indexOfLastTransaction
   );
@@ -77,11 +81,11 @@ const TransactionList = ({ customerId }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {currentTransactions.map((transaction) => (
+            {currentTransactions?.map((transaction) => (
               <tr key={transaction._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <div className="flex items-center">
-                    <TransactionIcon type={transaction.transactionType} />
+                    <TransactionIcon type={transaction?.transactionType} />
                     <span className="ml-2 text-sm font-medium text-gray-900">
                       {transaction.transactionType}
                     </span>
@@ -95,15 +99,15 @@ const TransactionList = ({ customerId }) => {
                       ? 'text-red-600'
                       : 'text-blue-600'
                   }`}>
-                    ${transaction.amount.toFixed(2)}
+                    R{transaction.amount.toFixed(2)}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900">
                     {transaction.transactionType === 'TRANSFER' ? (
                       <>
-                        <div>From: {transaction.from}</div>
-                        <div>To: {transaction.to}</div>
+                        <div>From: {transaction?.from?.name}</div>
+                        <div>To: {transaction?.to?.name}</div>
                       </>
                     ) : (
                       transaction.fromModel || transaction.toModel
@@ -113,7 +117,7 @@ const TransactionList = ({ customerId }) => {
                 <td className="px-6 py-4">
                   <div className="flex items-center text-sm text-gray-500">
                     <Clock className="h-4 w-4 mr-1" />
-                    {new Date(transaction.createdAt).toLocaleDateString()}
+                    {new Date(transaction.createdAt).toLocaleString()}
                   </div>
                 </td>
               </tr>

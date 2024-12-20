@@ -7,6 +7,7 @@ const {
   getCustomerTransactions,
   updateWalletBalance,
   checkCustomerManagementPermission,
+  verifyCustomer,
 } = require("../controllers/customerManagementController");
 const { protect } = require("../middlewares/auth");
 
@@ -25,6 +26,12 @@ router.patch(
   protect,
   checkCustomerManagementPermission,
   updateCustomerStatus
+);
+router.patch(
+  "/:id/verification",
+  protect,
+  checkCustomerManagementPermission,
+  verifyCustomer
 );
 router.get(
   "/:id/transactions",

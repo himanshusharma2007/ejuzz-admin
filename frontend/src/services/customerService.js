@@ -37,6 +37,16 @@ const customerService = {
         }
     },
 
+    customerVerification : async (customerId) => {
+        try {
+            const response = await api.patch(`/customers/${customerId}/verification`);
+            return response.data;
+        } catch (error) {
+            console.error("Error updating customer status:", error);
+            throw error.response?.data || error.message;
+        }
+    },
+
     // Fetch a customer's wallet transactions
     getCustomerTransactions : async (customerId) => {
         try {
