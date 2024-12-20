@@ -41,6 +41,7 @@ const ImageModal = ({ src, alt, onClose }) => {
 };
 
 const PDFExportButton = ({ targetRef }) => {
+  const showToast = useToast();
   const downloadPDF = async () => {
     // Ensure the target element exists
     if (!targetRef.current) return;

@@ -1,12 +1,13 @@
 const Customer = require('../models/customerModel');
 const Order = require('../models/orderModel');
 const Admin = require('../models/adminModel');
+const WalletTransaction = require('../models/walletTransactionModel');
 
 // Get all customers with pagination and filters
 exports.getAllCustomers = async (req, res) => {
   try {
     console.log('Fetching customers with filters:', req.query);
-    
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -69,7 +70,7 @@ exports.getCustomerDetails = async (req, res) => {
     // Fetch customer's order history
     const orders = await Order.find({ customerId: req.params.id })
       .populate('products.productId')
-      .populate('merchantId', 'storeName email');
+      .populate('merchantId', 'name email');
 
     console.log(`Found ${orders.length} orders for customer`);
 
@@ -99,7 +100,7 @@ exports.updateCustomerStatus = async (req, res) => {
 
     const customer = await Customer.findByIdAndUpdate(
       req.params.id,
-      { 
+      {
         isActive: req.body.active,
         $push: {
           statusHistory: {
@@ -158,12 +159,12 @@ exports.getCustomerTransactions = async (req, res) => {
     }
 
     // Get all orders (which represent transactions) for this customer
-    const transactions = await Order.find({ 
+    const transactions = await Order.find({
       customerId: req.params.id,
       status: 'Completed' // Only include completed transactions
     })
-    .select('totalAmount createdAt status')
-    .sort({ createdAt: -1 });
+      .select('totalAmount createdAt status')
+      .sort({ createdAt: -1 });
 
     console.log(`Found ${transactions.length} transactions for customer`);
 
