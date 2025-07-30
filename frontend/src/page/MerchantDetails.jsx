@@ -137,7 +137,7 @@ const MerchantDetails = () => {
   };
 
   // Verification Handler
-  const handleVerification = async (status) => {
+  const handleVerification = async (status = true) => {
     setVerifying(true);
     try {
       await merchantService.verifyMerchant(merchantId, { status });
@@ -174,7 +174,7 @@ const MerchantDetails = () => {
             </button>
             <button
               onClick={() =>
-                handleVerification(selectedMerchant._id, "approved")
+                handleVerification(selectedMerchant._id, true)
               }
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
             >
@@ -187,6 +187,7 @@ const MerchantDetails = () => {
 
   // Status Change Handler
   const handleStatusChange = async (active) => {
+    console.log('active in handleStatusChange', active)
     try {
       await merchantService.updateMerchantStatus(merchantId, { active });
       showToast(
