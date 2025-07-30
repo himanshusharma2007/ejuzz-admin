@@ -346,24 +346,31 @@ exports.getAdmin = (req, res) => {
 const sendTokenResponse = (admin, statusCode, res, credentials = {}) => {
   const token = admin.generateAuthToken();
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   const options = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+      Date.now() + Number(process.env.JWT_COOKIE_EXPIRE || 7) * 24 * 60 * 60 * 1000 // fallback to 7 days
     ),
-    httpOnly: true,
+    httpOnly: true, // Prevents client-side JS access
+    secure: true, // Ensures cookie is sent only over HTTPS in production
+    sameSite: "none", // Adds CSRF protection
   };
-
-  if (process.env.NODE_ENV === "production") {
-    options.secure = true;
-  }
 
   const responseData = {
     success: true,
     token,
-    ...credentials, // This will include loginId and password during signup
+    ...credentials, // Only include non-sensitive info here (avoid password)
   };
 
-  res.status(statusCode).cookie("token", token, options).json(responseData);
+  // Avoid sending sensitive data like plain passwords in the response
+  if (responseData.password) delete responseData.password;
+
+  res
+    .status(statusCode)
+    .cookie("token", token, options)
+    .json(responseData);
 };
+
 
 module.exports = exports;
